@@ -1,0 +1,637 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
+import { Calendar, Clock, Target, Users } from 'lucide-react';
+import { useState } from 'react';
+
+interface CreateProjectModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onCreateProject: (project: {
+        title: string;
+        description: string;
+        status: 'planning' | 'in_progress' | 'completed';
+        priority: 'low' | 'medium' | 'high' | 'critical';
+        category: string;
+        estimatedDuration: string;
+        assignedTeam: string;
+        objectives: string[];
+        deliverables: string[];
+    }) => void;
+}
+
+export function CreateProjectModal({
+    open,
+    onOpenChange,
+    onCreateProject,
+}: CreateProjectModalProps) {
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        status: 'planning' as 'planning' | 'in_progress' | 'completed',
+        priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
+        category: '',
+        estimatedDuration: '',
+        assignedTeam: '',
+        objectives: [''],
+        deliverables: [''],
+    });
+    const [loading, setLoading] = useState(false);
+
+    const addObjective = () => {
+        setFormData((prev) => ({
+            ...prev,
+            objectives: [...prev.objectives, ''],
+        }));
+    };
+
+    const removeObjective = (index: number) => {
+        setFormData((prev) => ({
+            ...prev,
+            objectives: prev.objectives.filter((_, i) => i !== index),
+        }));
+    };
+
+    const updateObjective = (index: number, value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            objectives: prev.objectives.map((obj, i) =>
+                i === index ? value : obj,
+            ),
+        }));
+    };
+
+    const addDeliverable = () => {
+        setFormData((prev) => ({
+            ...prev,
+            deliverables: [...prev.deliverables, ''],
+        }));
+    };
+
+    const removeDeliverable = (index: number) => {
+        setFormData((prev) => ({
+            ...prev,
+            deliverables: prev.deliverables.filter((_, i) => i !== index),
+        }));
+    };
+
+    const updateDeliverable = (index: number, value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            deliverables: prev.deliverables.map((del, i) =>
+                i === index ? value : del,
+            ),
+        }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (
+            !formData.title ||
+            !formData.description ||
+            !formData.category ||
+            !formData.estimatedDuration
+        ) {
+            toast({
+                title: 'Validation Error',
+                description:
+                    'Please fill in all required fields (Title, Description, Category, and Estimated Duration)',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            onCreateProject(formData);
+            toast({
+                title: 'Success',
+                description: 'Project created successfully',
+            });
+
+            // Reset form
+            setFormData({
+                title: '',
+                description: '',
+                status: 'planning',
+                priority: 'medium',
+                category: '',
+                estimatedDuration: '',
+                assignedTeam: '',
+                objectives: [''],
+                deliverables: [''],
+            });
+            onOpenChange(false);
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Failed to create project',
+                variant: 'destructive',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="bg-popover border-border max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                <DialogHeader>
+                    <DialogTitle className="text-popover-foreground text-2xl font-bold flex items-center gap-2">
+                        <Target className="w-6 h-6 text-primary" />
+                        Create New Project
+                    </DialogTitle>
+                    <DialogDescription className="text-muted-foreground mt-2">
+                        Set up a comprehensive project with detailed planning
+                        and objectives
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    {/* Basic Project Information */}
+                    <Card className="bg-muted/30 border-border">
+                        <CardContent className="p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Target className="w-4 h-4 text-primary" />
+                                <h3 className="text-lg font-semibold text-foreground">
+                                    Project Overview
+                                </h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2 md:col-span-2">
+                                    <Label
+                                        htmlFor="title"
+                                        className="text-popover-foreground font-medium flex items-center gap-1"
+                                    >
+                                        Project Title{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </Label>
+                                    <Input
+                                        id="title"
+                                        value={formData.title}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                title: e.target.value,
+                                            }))
+                                        }
+                                        className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary placeholder-muted-foreground"
+                                        placeholder="e.g., Customer Management System Redesign"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="category"
+                                        className="text-popover-foreground font-medium flex items-center gap-1"
+                                    >
+                                        Category{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </Label>
+                                    <Select
+                                        value={formData.category}
+                                        onValueChange={(value) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                category: value,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
+                                            <SelectValue placeholder="Select category" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-popover border-border">
+                                            <SelectItem value="web-development">
+                                                Web Development
+                                            </SelectItem>
+                                            <SelectItem value="mobile-app">
+                                                Mobile Application
+                                            </SelectItem>
+                                            <SelectItem value="infrastructure">
+                                                Infrastructure
+                                            </SelectItem>
+                                            <SelectItem value="data-analysis">
+                                                Data Analysis
+                                            </SelectItem>
+                                            <SelectItem value="design">
+                                                Design & UX
+                                            </SelectItem>
+                                            <SelectItem value="integration">
+                                                System Integration
+                                            </SelectItem>
+                                            <SelectItem value="research">
+                                                Research & Development
+                                            </SelectItem>
+                                            <SelectItem value="maintenance">
+                                                Maintenance
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="priority"
+                                        className="text-popover-foreground font-medium"
+                                    >
+                                        Priority Level
+                                    </Label>
+                                    <Select
+                                        value={formData.priority}
+                                        onValueChange={(
+                                            value:
+                                                | 'low'
+                                                | 'medium'
+                                                | 'high'
+                                                | 'critical',
+                                        ) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                priority: value,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-popover border-border">
+                                            <SelectItem value="low">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="bg-gray-100 text-gray-800 border-gray-200"
+                                                    >
+                                                        Low
+                                                    </Badge>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="medium">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="bg-blue-100 text-blue-800 border-blue-200"
+                                                    >
+                                                        Medium
+                                                    </Badge>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="high">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="bg-orange-100 text-orange-800 border-orange-200"
+                                                    >
+                                                        High
+                                                    </Badge>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="critical">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="bg-red-100 text-red-800 border-red-200"
+                                                    >
+                                                        Critical
+                                                    </Badge>
+                                                </div>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="estimatedDuration"
+                                        className="text-popover-foreground font-medium flex items-center gap-1"
+                                    >
+                                        <Clock className="w-4 h-4" />
+                                        Estimated Duration{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </Label>
+                                    <Select
+                                        value={formData.estimatedDuration}
+                                        onValueChange={(value) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                estimatedDuration: value,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
+                                            <SelectValue placeholder="Select duration" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-popover border-border">
+                                            <SelectItem value="1-2 weeks">
+                                                1-2 weeks
+                                            </SelectItem>
+                                            <SelectItem value="3-4 weeks">
+                                                3-4 weeks
+                                            </SelectItem>
+                                            <SelectItem value="1-2 months">
+                                                1-2 months
+                                            </SelectItem>
+                                            <SelectItem value="3-6 months">
+                                                3-6 months
+                                            </SelectItem>
+                                            <SelectItem value="6+ months">
+                                                6+ months
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="assignedTeam"
+                                        className="text-popover-foreground font-medium flex items-center gap-1"
+                                    >
+                                        <Users className="w-4 h-4" />
+                                        Assigned Team
+                                    </Label>
+                                    <Select
+                                        value={formData.assignedTeam}
+                                        onValueChange={(value) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                assignedTeam: value,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
+                                            <SelectValue placeholder="Select team" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-popover border-border">
+                                            <SelectItem value="engineering">
+                                                Engineering Team
+                                            </SelectItem>
+                                            <SelectItem value="design">
+                                                Design Team
+                                            </SelectItem>
+                                            <SelectItem value="product">
+                                                Product Team
+                                            </SelectItem>
+                                            <SelectItem value="data">
+                                                Data Team
+                                            </SelectItem>
+                                            <SelectItem value="devops">
+                                                DevOps Team
+                                            </SelectItem>
+                                            <SelectItem value="cross-functional">
+                                                Cross-functional
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="status"
+                                        className="text-popover-foreground font-medium"
+                                    >
+                                        Initial Status
+                                    </Label>
+                                    <Select
+                                        value={formData.status}
+                                        onValueChange={(
+                                            value:
+                                                | 'planning'
+                                                | 'in_progress'
+                                                | 'completed',
+                                        ) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                status: value,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-popover border-border">
+                                            <SelectItem value="planning">
+                                                Planning
+                                            </SelectItem>
+                                            <SelectItem value="in_progress">
+                                                In Progress
+                                            </SelectItem>
+                                            <SelectItem value="completed">
+                                                Completed
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2 md:col-span-2">
+                                    <Label
+                                        htmlFor="description"
+                                        className="text-popover-foreground font-medium flex items-center gap-1"
+                                    >
+                                        Project Description{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </Label>
+                                    <Textarea
+                                        id="description"
+                                        value={formData.description}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                description: e.target.value,
+                                            }))
+                                        }
+                                        className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary min-h-[100px] placeholder-muted-foreground"
+                                        placeholder="Provide a comprehensive description of the project scope, background, and context..."
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Separator className="border-border" />
+
+                    {/* Project Objectives */}
+                    <Card className="bg-muted/30 border-border">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <Target className="w-4 h-4 text-primary" />
+                                    <h3 className="text-lg font-semibold text-foreground">
+                                        Project Objectives
+                                    </h3>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addObjective}
+                                    className="text-primary border-primary hover:bg-primary/10"
+                                >
+                                    Add Objective
+                                </Button>
+                            </div>
+
+                            <div className="space-y-3">
+                                {formData.objectives.map((objective, index) => (
+                                    <div key={index} className="flex gap-2">
+                                        <Input
+                                            value={objective}
+                                            onChange={(e) =>
+                                                updateObjective(
+                                                    index,
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder={`Objective ${
+                                                index + 1
+                                            }...`}
+                                            className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                                        />
+                                        {formData.objectives.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    removeObjective(index)
+                                                }
+                                                className="text-destructive border-destructive hover:bg-destructive/10"
+                                            >
+                                                Remove
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Project Deliverables */}
+                    <Card className="bg-muted/30 border-border">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-primary" />
+                                    <h3 className="text-lg font-semibold text-foreground">
+                                        Expected Deliverables
+                                    </h3>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addDeliverable}
+                                    className="text-primary border-primary hover:bg-primary/10"
+                                >
+                                    Add Deliverable
+                                </Button>
+                            </div>
+
+                            <div className="space-y-3">
+                                {formData.deliverables.map(
+                                    (deliverable, index) => (
+                                        <div key={index} className="flex gap-2">
+                                            <Input
+                                                value={deliverable}
+                                                onChange={(e) =>
+                                                    updateDeliverable(
+                                                        index,
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder={`Deliverable ${
+                                                    index + 1
+                                                }...`}
+                                                className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                                            />
+                                            {formData.deliverables.length >
+                                                1 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        removeDeliverable(index)
+                                                    }
+                                                    className="text-destructive border-destructive hover:bg-destructive/10"
+                                                >
+                                                    Remove
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ),
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Separator className="border-border" />
+
+                    <div className="flex justify-between items-center pt-6">
+                        <div className="text-sm text-muted-foreground">
+                            All fields marked with{' '}
+                            <span className="text-destructive">*</span> are
+                            required
+                        </div>
+                        <div className="flex space-x-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                                className="border-border text-foreground hover:bg-accent px-6"
+                                disabled={loading}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8"
+                            >
+                                {loading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Creating Project...
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <Target className="w-4 h-4" />
+                                        Create Project
+                                    </div>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
