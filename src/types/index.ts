@@ -20,8 +20,10 @@ export interface Ticket {
     type: 'bug' | 'feature' | 'task' | 'story';
     priority: 'low' | 'medium' | 'high' | 'critical';
     status: 'open' | 'in_progress' | 'resolved' | 'closed';
-    assigneeId?: string;
-    assignee?: User;
+    assigneeId?: string; // Keep for backward compatibility
+    assignee?: User; // Keep for backward compatibility
+    assigneeIds?: string[]; // New field for multiple assignees
+    assignees?: User[]; // New field for multiple assignees
     reporterId: string;
     reporter?: User;
     department: string;

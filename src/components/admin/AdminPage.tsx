@@ -29,12 +29,14 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuthStore } from '@/store/authStore';
 import { useProjectStore } from '@/store/projectStore';
 import { Department, Project, User } from '@/types';
 import { motion } from 'framer-motion';
 import {
     Building,
     Edit,
+    Eye,
     Plus,
     Shield,
     Target,
@@ -43,49 +45,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PermissionsPage } from './PermissionsPage';
-
-const mockUsers: User[] = [
-    {
-        id: '1',
-        name: 'John Admin',
-        email: 'admin@company.com',
-        role: 'admin',
-        department: 'IT',
-        isActive: true,
-        avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150',
-        createdAt: new Date('2024-01-01'),
-    },
-    {
-        id: '2',
-        name: 'Sarah Manager',
-        email: 'manager@company.com',
-        role: 'manager',
-        department: 'Engineering',
-        isActive: true,
-        avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150',
-        createdAt: new Date('2024-01-01'),
-    },
-    {
-        id: '3',
-        name: 'Mike Developer',
-        email: 'developer@company.com',
-        role: 'team_member',
-        department: 'Engineering',
-        isActive: true,
-        avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150',
-        createdAt: new Date('2024-01-01'),
-    },
-    {
-        id: '4',
-        name: 'Lisa Client',
-        email: 'client@company.com',
-        role: 'client',
-        department: 'External',
-        isActive: false,
-        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-        createdAt: new Date('2024-01-01'),
-    },
-];
 
 const mockDepartments: Department[] = [
     {
@@ -118,7 +77,9 @@ const roleColors = {
     client: '#8B5CF6',
 };
 
-const permissions = [
+// re-use role/permission definitions from authStore instead of duplicating
+// keep this list for reference but prefix with underscore to indicate intentionally unused
+const _permissions: any = [
     {
         id: 'dashboard',
         name: 'Dashboard',
@@ -154,7 +115,8 @@ const permissions = [
     { id: '*', name: 'Full Access', description: 'Complete system access' },
 ];
 
-const rolePermissions = {
+// keep rolePermissions here for reference; actual permissions are in authStore
+const _rolePermissions: any = {
     admin: ['*'],
     manager: [
         'dashboard',
@@ -176,7 +138,16 @@ export function AdminPage() {
         updateProject,
         deleteProject,
     } = useProjectStore();
-    const [users, setUsers] = useState<User[]>(mockUsers);
+    const [users, setUsers] = useState<User[]>(() =>
+        useAuthStore.getState().getUsers(),
+    );
+    const authStore = useAuthStore();
+    useEffect(() => {
+        const unsub = useAuthStore.subscribe(() => {
+            setUsers(useAuthStore.getState().getUsers());
+        });
+        return unsub;
+    }, []);
     const [departments, setDepartments] =
         useState<Department[]>(mockDepartments);
     const [showUserModal, setShowUserModal] = useState(false);
@@ -186,6 +157,7 @@ export function AdminPage() {
     const [editingDepartment, setEditingDepartment] =
         useState<Department | null>(null);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
+    const [viewingProject, setViewingProject] = useState<Project | null>(null);
 
     const [userForm, setUserForm] = useState({
         name: '',
@@ -211,28 +183,21 @@ export function AdminPage() {
         fetchProjects();
     }, [fetchProjects]);
 
-    const handleUserSubmit = (e: React.FormEvent) => {
+    const handleUserSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (editingUser) {
-            setUsers((prev) =>
-                prev.map((user) =>
-                    user.id === editingUser.id
-                        ? {
-                              ...user,
-                              ...userForm,
-                              role: userForm.role as User['role'],
-                          }
-                        : user,
-                ),
-            );
-        } else {
-            const newUser: User = {
-                id: Date.now().toString(),
+            await authStore.updateUser(editingUser.id, {
                 ...userForm,
                 role: userForm.role as User['role'],
-                createdAt: new Date(),
-            };
-            setUsers((prev) => [...prev, newUser]);
+            });
+        } else {
+            await authStore.createUser(
+                userForm.name,
+                userForm.email,
+                'password',
+                userForm.role as User['role'],
+                userForm.department || undefined,
+            );
         }
         resetUserForm();
     };
@@ -336,18 +301,21 @@ export function AdminPage() {
         setShowProjectModal(true);
     };
 
-    const toggleUserStatus = (userId: string) => {
-        setUsers((prev) =>
-            prev.map((user) =>
-                user.id === userId
-                    ? { ...user, isActive: !user.isActive }
-                    : user,
-            ),
-        );
+    const viewProject = (project: Project) => {
+        setViewingProject(project);
     };
 
-    const deleteUser = (userId: string) => {
-        setUsers((prev) => prev.filter((user) => user.id !== userId));
+    const toggleUserStatus = async (userId: string) => {
+        const user = useAuthStore
+            .getState()
+            .getUsers()
+            .find((u) => u.id === userId);
+        if (!user) return;
+        await authStore.updateUser(userId, { isActive: !user.isActive });
+    };
+
+    const deleteUser = async (userId: string) => {
+        await authStore.deleteUser(userId);
     };
 
     const deleteDepartment = (departmentId: string) => {
@@ -366,16 +334,7 @@ export function AdminPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center justify-between"
-            >
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground">
-                        Admin Panel
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Manage users, departments, and system settings
-                    </p>
-                </div>
-            </motion.div>
+            ></motion.div>
 
             <Tabs defaultValue="users" className="space-y-6">
                 <TabsList className="grid w-full grid-cols-4 bg-muted">
@@ -688,15 +647,6 @@ export function AdminPage() {
                                     <CardTitle className="text-foreground">
                                         Project Management
                                     </CardTitle>
-                                    <Button
-                                        onClick={() =>
-                                            setShowProjectModal(true)
-                                        }
-                                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                                    >
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Add Project
-                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -791,6 +741,18 @@ export function AdminPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center space-x-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                viewProject(
+                                                                    project,
+                                                                )
+                                                            }
+                                                            className="text-primary hover:bg-primary/10"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
                                                         <Button
                                                             size="sm"
                                                             variant="ghost"
@@ -1144,6 +1106,7 @@ export function AdminPage() {
                                 }
                                 className="bg-background border-border text-foreground"
                                 required
+                                disabled
                             />
                         </div>
                         <div>
@@ -1164,6 +1127,7 @@ export function AdminPage() {
                                 }
                                 className="bg-background border-border text-foreground"
                                 required
+                                disabled
                             />
                         </div>
                         <div>
@@ -1232,6 +1196,142 @@ export function AdminPage() {
                             </Button>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Project Detail Modal */}
+            <Dialog
+                open={!!viewingProject}
+                onOpenChange={() => setViewingProject(null)}
+            >
+                <DialogContent className="bg-popover border-border max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-popover-foreground">
+                            Project Details
+                        </DialogTitle>
+                    </DialogHeader>
+                    {viewingProject && (
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-lg font-semibold text-popover-foreground">
+                                    {viewingProject.title}
+                                </h3>
+                                <p className="text-muted-foreground mt-2">
+                                    {viewingProject.description}
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-popover-foreground">
+                                        Status
+                                    </Label>
+                                    <div className="mt-1">
+                                        <Badge
+                                            variant={
+                                                viewingProject.status ===
+                                                'completed'
+                                                    ? 'default'
+                                                    : viewingProject.status ===
+                                                      'in_progress'
+                                                    ? 'secondary'
+                                                    : 'outline'
+                                            }
+                                            className={
+                                                viewingProject.status ===
+                                                'completed'
+                                                    ? 'bg-green-100 text-green-800 border-green-200'
+                                                    : viewingProject.status ===
+                                                      'in_progress'
+                                                    ? 'bg-blue-100 text-blue-800 border-blue-200'
+                                                    : 'bg-gray-100 text-gray-800 border-gray-200'
+                                            }
+                                        >
+                                            {viewingProject.status.replace(
+                                                '_',
+                                                ' ',
+                                            )}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label className="text-popover-foreground">
+                                        Progress
+                                    </Label>
+                                    <div className="mt-1 flex items-center space-x-2">
+                                        <Progress
+                                            value={viewingProject.progress}
+                                            className="flex-1"
+                                        />
+                                        <span className="text-sm text-muted-foreground">
+                                            {viewingProject.progress}%
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label className="text-popover-foreground">
+                                        Stories
+                                    </Label>
+                                    <p className="text-muted-foreground mt-1">
+                                        {viewingProject.stories.length} stories
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="text-popover-foreground">
+                                        Created
+                                    </Label>
+                                    <p className="text-muted-foreground mt-1">
+                                        {new Date(
+                                            viewingProject.createdAt,
+                                        ).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            </div>
+                            {viewingProject.stories.length > 0 && (
+                                <div>
+                                    <Label className="text-popover-foreground">
+                                        Stories
+                                    </Label>
+                                    <div className="mt-2 space-y-2">
+                                        {viewingProject.stories.map((story) => (
+                                            <Card
+                                                key={story.id}
+                                                className="bg-background border-border"
+                                            >
+                                                <CardContent className="p-3">
+                                                    <h4 className="font-medium text-foreground">
+                                                        {story.title}
+                                                    </h4>
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        {story.description}
+                                                    </p>
+                                                    <div className="flex items-center justify-between mt-2">
+                                                        <Badge
+                                                            variant={
+                                                                story.completed
+                                                                    ? 'default'
+                                                                    : 'secondary'
+                                                            }
+                                                        >
+                                                            {story.completed
+                                                                ? 'Completed'
+                                                                : 'In Progress'}
+                                                        </Badge>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {
+                                                                story.subTasks
+                                                                    .length
+                                                            }{' '}
+                                                            sub-tasks
+                                                        </span>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
         </div>

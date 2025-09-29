@@ -38,15 +38,6 @@ export function ProfilePage() {
 
     return (
         <div className="container mx-auto px-6 py-8 max-w-4xl">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground mb-2">
-                    Profile
-                </h1>
-                <p className="text-muted-foreground">
-                    Manage your account settings and preferences
-                </p>
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Profile Overview */}
                 <div className="lg:col-span-1">
@@ -228,7 +219,7 @@ export function ProfilePage() {
                                         rows={4}
                                     />
                                 ) : (
-                                    <div className="p-2 border rounded-md bg-muted min-h-[100px]">
+                                    <div className="p-2 border rounded-md bg-muted sm:min-h-[100px]">
                                         {user?.bio || 'No bio provided'}
                                     </div>
                                 )}

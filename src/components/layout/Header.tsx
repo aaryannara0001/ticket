@@ -7,34 +7,41 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/authStore';
-import { LogOut, Search, Settings, User } from 'lucide-react';
-import { useState } from 'react';
+import { LogOut, Menu, Settings, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export function Header() {
-    const [searchQuery, setSearchQuery] = useState('');
+interface HeaderProps {
+    onMenuClick?: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
 
     return (
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 shadow-lg">
-            {/* Search */}
-            <div className="flex items-center space-x-4 flex-1 max-w-md">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input
-                        placeholder="Search tickets, users, or projects..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 bg-background border-border text-foreground placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                    />
-                </div>
+        <header className="h-14 sm:h-16 bg-card border-b border-border flex items-center justify-between px-3 sm:px-4 md:px-6 shadow-lg">
+            {/* Mobile menu button and logo */}
+            <div className="flex items-center space-x-3 lg:hidden">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onMenuClick}
+                    className="p-2 hover:bg-accent text-foreground"
+                >
+                    <Menu className="w-5 h-5" />
+                </Button>
+                <h1 className="text-lg font-bold text-foreground tracking-tight">
+                    TicketFlow
+                </h1>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center space-x-4">
+            {/* Desktop spacing */}
+            <div className="hidden lg:block" />
+
+            {/* Actions - responsive spacing */}
+            {/* Actions - responsive spacing and sizing */}
+            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
                 {/* Notifications */}
                 <NotificationCenter />
 
@@ -43,23 +50,23 @@ export function Header() {
                     <DropdownMenuTrigger asChild>
                         <Button
                             variant="ghost"
-                            className="flex items-center space-x-2 text-foreground hover:bg-accent px-3 py-2 rounded-lg transition-colors"
+                            className="flex items-center space-x-1 sm:space-x-2 text-foreground hover:bg-accent px-2 sm:px-3 py-2 rounded-lg transition-colors"
                         >
-                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-sm">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center shadow-sm">
                                 {user?.avatar ? (
                                     <img
                                         src={user.avatar}
                                         alt={user.name}
-                                        className="w-8 h-8 rounded-full object-cover"
+                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
                                     />
                                 ) : (
                                     <User
-                                        size={16}
-                                        className="text-primary-foreground"
+                                        size={14}
+                                        className="sm:w-4 sm:h-4 text-primary-foreground"
                                     />
                                 )}
                             </div>
-                            <span className="font-semibold text-foreground">
+                            <span className="hidden sm:block font-semibold text-foreground text-sm sm:text-base">
                                 {user?.name}
                             </span>
                         </Button>

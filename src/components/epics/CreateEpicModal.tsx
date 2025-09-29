@@ -59,12 +59,9 @@ export function CreateEpicModal({
                 status: 'planning',
             });
             onOpenChange(false);
-        } catch (error) {
-            toast({
-                title: 'Error',
-                description: 'Failed to create epic',
-                variant: 'destructive',
-            });
+        } catch {
+            // ignore specific error object to satisfy lint
+            setError('Failed to create epic');
         } finally {
             setLoading(false);
         }
@@ -118,7 +115,7 @@ export function CreateEpicModal({
                                     description: e.target.value,
                                 }))
                             }
-                            className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary min-h-[120px] placeholder-muted-foreground"
+                            className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary sm:min-h-[120px] placeholder-muted-foreground"
                             placeholder="Describe the epic in detail..."
                             required
                         />

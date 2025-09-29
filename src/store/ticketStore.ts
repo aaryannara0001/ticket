@@ -1,51 +1,8 @@
-import { Attachment, Comment, DashboardStats, Ticket, User } from '@/types';
+import { Attachment, Comment, DashboardStats, Ticket } from '@/types';
 import { create } from 'zustand';
 import { useAuthStore } from './authStore';
 
 // Mock data - Enhanced according to LLD
-const mockUsers: User[] = [
-    {
-        id: '1',
-        name: 'John Admin',
-        email: 'admin@company.com',
-        role: 'admin' as const,
-        department: 'IT',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '2',
-        name: 'Sarah Manager',
-        email: 'manager@company.com',
-        role: 'manager' as const,
-        department: 'Engineering',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '3',
-        name: 'Mike Developer',
-        email: 'developer@company.com',
-        role: 'team_member' as const,
-        department: 'Engineering',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '4',
-        name: 'Lisa Client',
-        email: 'client@company.com',
-        role: 'client' as const,
-        department: 'External',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-];
-
 const mockTickets: Ticket[] = [
     {
         id: '1',
@@ -94,6 +51,29 @@ const mockTickets: Ticket[] = [
         priority: 'medium',
         status: 'in_progress',
         assigneeId: '3',
+        assigneeIds: ['2', '3'],
+        assignees: [
+            {
+                id: '2',
+                name: 'Sarah Manager',
+                email: 'manager@company.com',
+                role: 'manager' as const,
+                department: 'Engineering',
+                isActive: true,
+                createdAt: new Date('2024-01-01'),
+                avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150',
+            },
+            {
+                id: '3',
+                name: 'Mike Developer',
+                email: 'developer@company.com',
+                role: 'team_member' as const,
+                department: 'Engineering',
+                isActive: true,
+                createdAt: new Date('2024-01-01'),
+                avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150',
+            },
+        ],
         reporterId: '2',
         department: 'Engineering',
         createdAt: new Date('2024-01-14'),
@@ -186,6 +166,39 @@ const mockTickets: Ticket[] = [
         priority: 'high',
         status: 'in_progress',
         assigneeId: '2',
+        assigneeIds: ['1', '2', '3'],
+        assignees: [
+            {
+                id: '1',
+                name: 'John Admin',
+                email: 'admin@company.com',
+                role: 'admin' as const,
+                department: 'IT',
+                isActive: true,
+                createdAt: new Date('2024-01-01'),
+                avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150',
+            },
+            {
+                id: '2',
+                name: 'Sarah Manager',
+                email: 'manager@company.com',
+                role: 'manager' as const,
+                department: 'Engineering',
+                isActive: true,
+                createdAt: new Date('2024-01-01'),
+                avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150',
+            },
+            {
+                id: '3',
+                name: 'Mike Developer',
+                email: 'developer@company.com',
+                role: 'team_member' as const,
+                department: 'Engineering',
+                isActive: true,
+                createdAt: new Date('2024-01-01'),
+                avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150',
+            },
+        ],
         reporterId: '1',
         department: 'Engineering',
         createdAt: new Date('2024-01-08'),
@@ -324,123 +337,14 @@ const mockTickets: Ticket[] = [
     },
 ];
 
-const mockStats: DashboardStats = {
-    openTickets: 4,
-    closedTickets: 1,
-    inProgressTickets: 4,
-    criticalTickets: 2,
-    ticketsByDepartment: [
-        { department: 'Engineering', count: 7 },
-        { department: 'IT', count: 3 },
-        { department: 'Support', count: 0 },
-        { department: 'Marketing', count: 0 },
-    ],
-    ticketsByPriority: [
-        { priority: 'Critical', count: 2 },
-        { priority: 'High', count: 4 },
-        { priority: 'Medium', count: 4 },
-        { priority: 'Low', count: 0 },
-    ],
-    recentActivity: [
-        {
-            id: '1',
-            type: 'ticket_created',
-            description: 'Mobile app crashes on startup (TSK-008) was created',
-            userId: '2',
-            user: {
-                id: '2',
-                name: 'Sarah Manager',
-                email: 'manager@company.com',
-                role: 'manager',
-                department: 'Engineering',
-                isActive: true,
-                createdAt: new Date('2024-01-01'),
-            },
-            ticketId: '8',
-            createdAt: new Date('2024-01-18T09:00:00Z'),
-        },
-        {
-            id: '2',
-            type: 'ticket_updated',
-            description:
-                'Payment processing bug (TSK-007) priority changed to Critical',
-            userId: '1',
-            user: {
-                id: '1',
-                name: 'John Admin',
-                email: 'admin@company.com',
-                role: 'admin',
-                department: 'IT',
-                isActive: true,
-                createdAt: new Date('2024-01-01'),
-            },
-            ticketId: '7',
-            createdAt: new Date('2024-01-17T14:30:00Z'),
-        },
-        {
-            id: '3',
-            type: 'comment_added',
-            description:
-                'New comment added to Database backup automation (TSK-003)',
-            userId: '1',
-            user: {
-                id: '1',
-                name: 'John Admin',
-                email: 'admin@company.com',
-                role: 'admin',
-                department: 'IT',
-                isActive: true,
-                createdAt: new Date('2024-01-01'),
-            },
-            ticketId: '3',
-            createdAt: new Date('2024-01-18T14:20:00Z'),
-        },
-        {
-            id: '4',
-            type: 'ticket_assigned',
-            description:
-                'Payment processing bug (TSK-007) assigned to Mike Developer',
-            userId: '2',
-            user: {
-                id: '2',
-                name: 'Sarah Manager',
-                email: 'manager@company.com',
-                role: 'manager',
-                department: 'Engineering',
-                isActive: true,
-                createdAt: new Date('2024-01-01'),
-            },
-            ticketId: '7',
-            createdAt: new Date('2024-01-17T11:45:00Z'),
-        },
-        {
-            id: '5',
-            type: 'ticket_updated',
-            description: 'Performance optimization (TSK-010) marked as closed',
-            userId: '3',
-            user: {
-                id: '3',
-                name: 'Mike Developer',
-                email: 'developer@company.com',
-                role: 'team_member',
-                department: 'Engineering',
-                isActive: true,
-                createdAt: new Date('2024-01-01'),
-            },
-            ticketId: '10',
-            createdAt: new Date('2024-01-15T16:30:00Z'),
-        },
-    ],
-};
-
+// Minimal TicketState interface (only the members used across the app/tests)
 interface TicketState {
     tickets: Ticket[];
     selectedTicket: Ticket | null;
     dashboardStats: DashboardStats | null;
     loading: boolean;
 
-    // Actions
-    fetchTickets: () => Promise<void>;
+    fetchTickets: (filter?: 'all' | 'assigned' | 'reported') => Promise<void>;
     fetchDashboardStats: () => Promise<void>;
     createTicket: (
         ticket: Omit<Ticket, 'id' | 'key' | 'createdAt' | 'updatedAt'>,
@@ -453,46 +357,131 @@ interface TicketState {
         ticketId: string,
         attachment: Omit<Attachment, 'id' | 'uploadedAt'>,
     ) => Promise<void>;
+
+    // Real-time controls
+    startRealtimeUpdates: () => void;
+    stopRealtimeUpdates: () => void;
 }
 
-export const useTicketStore = create<TicketState>()((set, get) => ({
-    tickets: [],
+// Helper to compute dashboard stats from tickets (returns shape from src/types)
+function computeStatsFromTickets(tickets: Ticket[]): DashboardStats {
+    const openTickets = tickets.filter((t) => t.status === 'open').length;
+    const inProgressTickets = tickets.filter(
+        (t) => t.status === 'in_progress',
+    ).length;
+    const closedTickets = tickets.filter(
+        (t) => t.status === 'closed' || t.status === 'resolved',
+    ).length;
+    const criticalTickets = tickets.filter(
+        (t) => t.priority === 'critical',
+    ).length;
+
+    const deptMap = new Map<string, number>();
+    const prioMap = new Map<string, number>();
+    const recentActivity: any[] = [];
+
+    tickets.forEach((t) => {
+        deptMap.set(t.department, (deptMap.get(t.department) || 0) + 1);
+        prioMap.set(t.priority, (prioMap.get(t.priority) || 0) + 1);
+
+        // Add a ticket created activity
+        recentActivity.push({
+            id: `${t.id}-created`,
+            type: 'ticket_created',
+            description: t.title,
+            userId: t.reporterId,
+            user: t.reporter,
+            ticketId: t.id,
+            createdAt: t.createdAt,
+        });
+
+        // If there are comments, add the latest comment as activity
+        if (t.comments && t.comments.length > 0) {
+            const last = t.comments[t.comments.length - 1];
+            recentActivity.push({
+                id: `${t.id}-comment-${last.id}`,
+                type: 'comment_added',
+                description: last.content,
+                userId: last.authorId,
+                user: last.author,
+                ticketId: t.id,
+                createdAt: last.createdAt,
+            });
+        }
+    });
+
+    // sort recent activity by date desc and keep 5
+    recentActivity.sort(
+        (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
+    );
+
+    const ticketsByDepartment = Array.from(deptMap.entries()).map(
+        ([department, count]) => ({ department, count }),
+    );
+    const ticketsByPriority = Array.from(prioMap.entries()).map(
+        ([priority, count]) => ({ priority, count }),
+    );
+
+    return {
+        openTickets,
+        closedTickets,
+        inProgressTickets,
+        criticalTickets,
+        ticketsByDepartment,
+        ticketsByPriority,
+        recentActivity: recentActivity.slice(0, 5),
+    } as DashboardStats;
+}
+
+let _realtimeInterval: number | null = null;
+
+export const useTicketStore = create<TicketState>((set, get) => ({
+    tickets: [...mockTickets],
     selectedTicket: null,
-    dashboardStats: null,
+    dashboardStats: computeStatsFromTickets(mockTickets),
     loading: false,
 
-    fetchTickets: async () => {
+    fetchTickets: async (filter) => {
         set({ loading: true });
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
+        await new Promise((r) => setTimeout(r, 200));
         const { user } = useAuthStore.getState();
-        let filteredTickets = mockTickets;
+        let filtered = mockTickets;
 
-        // Filter based on user role
-        if (user?.role === 'client') {
-            filteredTickets = mockTickets.filter(
-                (t) => t.reporterId === user.id,
-            );
-        } else if (user?.role === 'team_member') {
-            filteredTickets = mockTickets.filter(
+        if (filter === 'assigned' && user) {
+            filtered = mockTickets.filter(
                 (t) =>
                     t.assigneeId === user.id ||
-                    t.department === user.department,
+                    (t.assigneeIds && t.assigneeIds.includes(user.id)),
             );
+        } else if (filter === 'reported' && user) {
+            filtered = mockTickets.filter((t) => t.reporterId === user.id);
+        } else {
+            if (user?.role === 'client') {
+                filtered = mockTickets.filter((t) => t.reporterId === user.id);
+            } else if (user?.role === 'team_member') {
+                filtered = mockTickets.filter(
+                    (t) =>
+                        t.assigneeId === user.id ||
+                        (t.assigneeIds && t.assigneeIds.includes(user.id)) ||
+                        t.department === user.department,
+                );
+            }
         }
 
-        set({ tickets: filteredTickets, loading: false });
+        set({ tickets: filtered, loading: false });
     },
 
     fetchDashboardStats: async () => {
         set({ loading: true });
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        set({ dashboardStats: mockStats, loading: false });
+        await new Promise((r) => setTimeout(r, 150));
+        const tickets = get().tickets.length > 0 ? get().tickets : mockTickets;
+        const stats = computeStatsFromTickets(tickets);
+        set({ dashboardStats: stats, loading: false });
     },
 
     createTicket: async (ticketData) => {
         const { user } = useAuthStore.getState();
+        const authUsers = useAuthStore.getState().getUsers();
         const newTicket: Ticket = {
             ...ticketData,
             id: Date.now().toString(),
@@ -502,7 +491,12 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
             updatedAt: new Date(),
             attachments: [],
             comments: [],
-        };
+            assignees: ticketData.assigneeIds
+                ? authUsers.filter((u) =>
+                      ticketData.assigneeIds?.includes(u.id),
+                  )
+                : undefined,
+        } as Ticket;
 
         set((state) => ({ tickets: [newTicket, ...state.tickets] }));
     },
@@ -515,47 +509,34 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
                         ...ticket,
                         ...updates,
                         updatedAt: new Date(),
-                    };
-
-                    // If assigneeId is being updated, also update the assignee object
+                    } as Ticket;
                     if (updates.assigneeId !== undefined) {
-                        if (updates.assigneeId) {
-                            const assignee = mockUsers.find(
-                                (u) => u.id === updates.assigneeId,
-                            );
-                            updatedTicket.assignee = assignee;
-                        } else {
-                            updatedTicket.assignee = undefined;
-                        }
+                        const authUsers = useAuthStore.getState().getUsers();
+                        updatedTicket.assignee = authUsers.find(
+                            (u) => u.id === updates.assigneeId,
+                        ) as any;
                     }
-
+                    if (updates.assigneeIds !== undefined) {
+                        const authUsers = useAuthStore.getState().getUsers();
+                        updatedTicket.assignees =
+                            updates.assigneeIds &&
+                            updates.assigneeIds.length > 0
+                                ? authUsers.filter((u) =>
+                                      updates.assigneeIds?.includes(u.id),
+                                  )
+                                : undefined;
+                    }
                     return updatedTicket;
                 }
                 return ticket;
             }),
             selectedTicket:
                 state.selectedTicket?.id === id
-                    ? (() => {
-                          const updatedTicket = {
-                              ...state.selectedTicket,
-                              ...updates,
-                              updatedAt: new Date(),
-                          };
-
-                          // If assigneeId is being updated, also update the assignee object
-                          if (updates.assigneeId !== undefined) {
-                              if (updates.assigneeId) {
-                                  const assignee = mockUsers.find(
-                                      (u) => u.id === updates.assigneeId,
-                                  );
-                                  updatedTicket.assignee = assignee;
-                              } else {
-                                  updatedTicket.assignee = undefined;
-                              }
-                          }
-
-                          return updatedTicket;
-                      })()
+                    ? {
+                          ...state.selectedTicket,
+                          ...updates,
+                          updatedAt: new Date(),
+                      }
                     : state.selectedTicket,
         }));
     },
@@ -568,14 +549,11 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
         }));
     },
 
-    setSelectedTicket: (ticket) => {
-        set({ selectedTicket: ticket });
-    },
+    setSelectedTicket: (ticket) => set({ selectedTicket: ticket }),
 
     addComment: async (ticketId, content) => {
         const { user } = useAuthStore.getState();
         if (!user) return;
-
         const newComment: Comment = {
             id: Date.now().toString(),
             content,
@@ -584,7 +562,7 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
             ticketId,
             createdAt: new Date(),
             mentions: [],
-        };
+        } as Comment;
 
         set((state) => ({
             tickets: state.tickets.map((ticket) =>
@@ -608,13 +586,12 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
     addAttachment: async (ticketId, attachmentData) => {
         const { user } = useAuthStore.getState();
         if (!user) return;
-
         const newAttachment: Attachment = {
             ...attachmentData,
             id: Date.now().toString(),
             uploadedBy: user.id,
             uploadedAt: new Date(),
-        };
+        } as Attachment;
 
         set((state) => ({
             tickets: state.tickets.map((ticket) =>
@@ -636,5 +613,111 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
                       }
                     : state.selectedTicket,
         }));
+    },
+
+    startRealtimeUpdates: () => {
+        if (_realtimeInterval) return;
+        _realtimeInterval = window.setInterval(() => {
+            // simple random event: create or update
+            const rnd = Math.random();
+            if (rnd < 0.4) {
+                // create a new ticket
+                const authUsersNow = useAuthStore.getState().getUsers();
+                const reporterId =
+                    useAuthStore.getState().user?.id ||
+                    (authUsersNow[0]?.id ?? '1');
+                const newT: Ticket = {
+                    id: Date.now().toString(),
+                    key: `PROJ-${Math.floor(Math.random() * 1000)}`,
+                    title: `Realtime ${Date.now()}`,
+                    description: 'Auto-generated',
+                    type: 'task',
+                    priority: Math.random() < 0.2 ? 'critical' : 'low',
+                    status: 'open',
+                    reporterId,
+                    department: 'Engineering',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    attachments: [],
+                    comments: [],
+                } as Ticket;
+                set((s) => ({
+                    tickets: [newT, ...s.tickets],
+                    dashboardStats: computeStatsFromTickets([
+                        newT,
+                        ...s.tickets,
+                    ]),
+                }));
+            } else {
+                // update random ticket status or add comment
+                const state = get();
+                if (state.tickets.length === 0) return;
+                const idx = Math.floor(Math.random() * state.tickets.length);
+                const ticket = state.tickets[idx];
+                if (!ticket) return;
+                const op = Math.random();
+                if (op < 0.5) {
+                    // change status
+                    const newStatus = (
+                        ticket.status === 'open'
+                            ? 'in_progress'
+                            : ticket.status === 'in_progress'
+                            ? 'resolved'
+                            : 'closed'
+                    ) as Ticket['status'];
+                    set((s) => {
+                        const updated = s.tickets.map((t) =>
+                            t.id === ticket.id
+                                ? {
+                                      ...t,
+                                      status: newStatus,
+                                      updatedAt: new Date(),
+                                  }
+                                : t,
+                        );
+                        return {
+                            tickets: updated,
+                            dashboardStats: computeStatsFromTickets(updated),
+                        };
+                    });
+                } else {
+                    // add comment
+                    const authUsersNow = useAuthStore.getState().getUsers();
+                    const authorUser =
+                        useAuthStore.getState().user || authUsersNow[0];
+                    const comment: Comment = {
+                        id: Date.now().toString(),
+                        content: 'Realtime comment',
+                        authorId: authorUser?.id,
+                        author: (authorUser as any) || authUsersNow[0],
+                        ticketId: ticket.id,
+                        createdAt: new Date(),
+                        mentions: [],
+                    } as Comment;
+                    set((s) => {
+                        const updated = s.tickets.map((t) =>
+                            t.id === ticket.id
+                                ? {
+                                      ...t,
+                                      comments: [...t.comments, comment],
+                                      updatedAt: new Date(),
+                                  }
+                                : t,
+                        );
+                        return {
+                            tickets: updated,
+                            dashboardStats: computeStatsFromTickets(updated),
+                        };
+                    });
+                }
+            }
+        }, 5000);
+    },
+
+    stopRealtimeUpdates: () => {
+        if (_realtimeInterval) {
+            clearInterval(_realtimeInterval);
+            _realtimeInterval = null;
+        }
     },
 }));

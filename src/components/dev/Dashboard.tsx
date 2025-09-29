@@ -8,7 +8,6 @@ import { DashboardCard } from './DashboardCard';
 import { DashboardStats } from './DashboardStats';
 import { MyTicketsWidget } from './MyTicketsWidget';
 import { RecentActivity } from './RecentActivity';
-import { RoleWidgets } from './RoleWidgets';
 import { TicketsByDepartment } from './TicketsByDepartment';
 import { TicketsByPriority } from './TicketsByPriority';
 
@@ -18,13 +17,7 @@ export function Dashboard() {
 
     useEffect(() => {
         useTicketStore.getState().fetchDashboardStats();
-
-        // start realtime simulation
-        useTicketStore.getState().startRealtimeUpdates();
-
-        return () => {
-            useTicketStore.getState().stopRealtimeUpdates();
-        };
+         
     }, []);
 
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -158,9 +151,6 @@ export function Dashboard() {
                     </div>
                 </div>
             )}
-
-            {/* Role-based widgets */}
-            <RoleWidgets />
 
             {/* Stats Cards - Responsive Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">

@@ -1,138 +1,6 @@
 import { Project, Story, SubTask } from '@/types';
 import { create } from 'zustand';
 
-const mockProjects: Project[] = [
-    {
-        id: '1',
-        title: 'User Authentication System',
-        description:
-            'Implement a comprehensive user authentication system with login, registration, password reset, and social login options.',
-        status: 'in_progress',
-        progress: 65,
-        createdAt: new Date('2024-01-01'),
-        managerId: '2', // Assigned to Sarah Manager
-        stories: [
-            {
-                id: '1',
-                title: 'User Registration',
-                description:
-                    'Allow users to create accounts with email and password',
-                acceptanceCriteria: [
-                    'User can enter email and password',
-                    'Password strength validation',
-                    'Email verification sent',
-                    'User redirected to login after registration',
-                ],
-                completed: false,
-                subTasks: [
-                    {
-                        id: '1',
-                        title: 'Create registration form',
-                        completed: true,
-                        storyId: '1',
-                    },
-                    {
-                        id: '2',
-                        title: 'Add password validation',
-                        completed: true,
-                        storyId: '1',
-                    },
-                    {
-                        id: '3',
-                        title: 'Implement email verification',
-                        completed: false,
-                        storyId: '1',
-                    },
-                ],
-                epicId: '1',
-            },
-            {
-                id: '2',
-                title: 'Login Functionality',
-                description: 'Users can log in with their credentials',
-                acceptanceCriteria: [
-                    'Login form with email/password fields',
-                    'Remember me option',
-                    'Forgot password link',
-                    'Proper error messages',
-                ],
-                completed: true,
-                subTasks: [
-                    {
-                        id: '4',
-                        title: 'Create login form UI',
-                        completed: true,
-                        storyId: '2',
-                    },
-                    {
-                        id: '5',
-                        title: 'Implement authentication logic',
-                        completed: true,
-                        storyId: '2',
-                    },
-                    {
-                        id: '6',
-                        title: 'Add remember me functionality',
-                        completed: false,
-                        storyId: '2',
-                    },
-                ],
-                epicId: '1',
-            },
-        ],
-    },
-    {
-        id: '2',
-        title: 'Dashboard Analytics',
-        description:
-            'Create comprehensive dashboard with charts, metrics, and real-time data visualization.',
-        status: 'planning',
-        progress: 20,
-        createdAt: new Date('2024-01-15'),
-        managerId: '2', // Assigned to Sarah Manager
-        stories: [
-            {
-                id: '3',
-                title: 'Basic Dashboard Layout',
-                description: 'Set up the main dashboard structure',
-                acceptanceCriteria: [
-                    'Responsive grid layout',
-                    'Header with user info',
-                    'Sidebar navigation',
-                    'Main content area',
-                ],
-                completed: false,
-                subTasks: [
-                    {
-                        id: '7',
-                        title: 'Design dashboard wireframes',
-                        completed: true,
-                        storyId: '3',
-                    },
-                    {
-                        id: '8',
-                        title: 'Implement responsive layout',
-                        completed: false,
-                        storyId: '3',
-                    },
-                ],
-                epicId: '2',
-            },
-        ],
-    },
-    {
-        id: '3',
-        title: 'E-commerce Platform',
-        description:
-            'Build a complete e-commerce solution with product catalog, shopping cart, and payment processing.',
-        status: 'completed',
-        progress: 100,
-        createdAt: new Date('2024-02-01'),
-        managerId: '1', // Assigned to John Admin
-        stories: [],
-    },
-];
-
 interface ProjectState {
     projects: Project[];
     loading: boolean;
@@ -183,8 +51,9 @@ export const useProjectStore = create<ProjectState>()((set) => ({
     fetchProjects: async () => {
         set({ loading: true });
         // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        set({ projects: mockProjects, loading: false });
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        // start empty - admin can create projects
+        set({ projects: [], loading: false });
     },
 
     createProject: async (projectData) => {

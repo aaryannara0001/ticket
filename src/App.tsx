@@ -1,5 +1,6 @@
 import { LoginPage } from '@/components/auth/LoginPage';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { SignupPage } from '@/components/auth/SignupPage';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { Layout } from '@/components/layout/Layout';
 import { useAuthStore } from '@/store/authStore';
@@ -16,6 +17,7 @@ import { EpicsPage } from '@/components/epics/EpicsPage';
 import { KanbanPage } from '@/components/kanban/KanbanPage';
 import { ProfilePage } from '@/components/profile/ProfilePage';
 import { ReportsPage } from '@/components/reports/ReportsPage';
+import { MyTicketsPage } from '@/components/tickets/MyTicketsPage';
 import { TicketsPage } from '@/components/tickets/TicketsPage';
 import { WorkflowsPage } from '@/components/workflows/WorkflowsPage';
 
@@ -31,6 +33,7 @@ function App() {
         >
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
 
                 <Route
                     path="/"
@@ -60,6 +63,17 @@ function App() {
                         <ProtectedRoute permission="tickets">
                             <Layout>
                                 <TicketsPage />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/my-tickets"
+                    element={
+                        <ProtectedRoute permission="my_tickets">
+                            <Layout>
+                                <MyTicketsPage />
                             </Layout>
                         </ProtectedRoute>
                     }

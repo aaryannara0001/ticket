@@ -9,9 +9,26 @@ interface AuthState {
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
     hasPermission: (permission: string) => boolean;
+    register: (
+        name: string,
+        email: string,
+        password: string,
+        role: User['role'],
+    ) => Promise<boolean>;
+    // User management helpers for admin
+    getUsers: () => User[];
+    createUser: (
+        name: string,
+        email: string,
+        password: string,
+        role: User['role'],
+        department?: string,
+    ) => Promise<User | null>;
+    updateUser: (id: string, patch: Partial<User>) => Promise<boolean>;
+    deleteUser: (id: string) => Promise<boolean>;
 }
 
-// Mock users for demo
+// Mock users for demo - keep only a single admin seed to avoid duplicated mock data across app
 const mockUsers: User[] = [
     {
         id: '1',
@@ -20,38 +37,8 @@ const mockUsers: User[] = [
         role: 'admin',
         department: 'IT',
         isActive: true,
-        createdAt: new Date('2024-01-01'),
+        createdAt: new Date(),
         avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '2',
-        name: 'Sarah Manager',
-        email: 'manager@company.com',
-        role: 'manager',
-        department: 'Engineering',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '3',
-        name: 'Mike Developer',
-        email: 'developer@company.com',
-        role: 'team_member',
-        department: 'Engineering',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '4',
-        name: 'Lisa Client',
-        email: 'client@company.com',
-        role: 'client',
-        department: 'External',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
     },
 ];
 
@@ -87,6 +74,20 @@ const rolePermissions: Record<string, string[]> = {
     ],
 };
 
+// Map logical permission keys to the feature keys used by settingsStore
+const permissionToFeature: Record<string, string | undefined> = {
+    dashboard: 'dashboardAccess',
+    tickets: 'ticketManagement',
+    my_tickets: 'ticketManagement',
+    kanban: 'kanbanAccess',
+    epics: 'projectManagement',
+    reports: 'reportsAccess',
+    workflows: 'workflowManagement',
+    admin: 'adminAccess',
+    profile: 'profileAccess',
+    notifications: 'notificationAccess',
+};
+
 export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
@@ -103,6 +104,92 @@ export const useAuthStore = create<AuthState>()(
                 return false;
             },
 
+            register: async (
+                name: string,
+                email: string,
+                _password: string,
+                role: User['role'],
+            ) => {
+                // Simple mock register: prevent duplicates
+                const existing = mockUsers.find((u) => u.email === email);
+                if (existing) return false;
+
+                const newUser: User = {
+                    id: String(Date.now()),
+                    name,
+                    email,
+                    role,
+                    department: role === 'client' ? 'External' : 'Unassigned',
+                    isActive: true,
+                    createdAt: new Date(),
+                } as User;
+
+                // Add to mock users store (in-memory)
+                mockUsers.push(newUser);
+
+                // Set as authenticated user
+                set({ user: newUser, isAuthenticated: true });
+                return true;
+            },
+
+            // User helpers
+            getUsers: () => {
+                // return a shallow copy to avoid accidental mutation
+                return mockUsers.map((u) => ({ ...u }));
+            },
+
+            createUser: async (
+                name: string,
+                email: string,
+                _password: string,
+                role: User['role'],
+                department?: string,
+            ) => {
+                const existing = mockUsers.find((u) => u.email === email);
+                if (existing) return null;
+                const newUser: User = {
+                    id: String(Date.now()),
+                    name,
+                    email,
+                    role,
+                    department:
+                        department ||
+                        (role === 'client' ? 'External' : 'Unassigned'),
+                    isActive: true,
+                    createdAt: new Date(),
+                } as User;
+                mockUsers.push(newUser);
+                return { ...newUser };
+            },
+
+            updateUser: async (id: string, patch: Partial<User>) => {
+                const idx = mockUsers.findIndex((u) => u.id === id);
+                if (idx === -1) return false;
+                mockUsers[idx] = { ...mockUsers[idx], ...patch };
+
+                // If current authenticated user was updated, update store user as well
+                const { user } = get();
+                if (user && user.id === id) {
+                    set({ user: { ...user, ...patch } as User });
+                }
+
+                return true;
+            },
+
+            deleteUser: async (id: string) => {
+                const idx = mockUsers.findIndex((u) => u.id === id);
+                if (idx === -1) return false;
+                mockUsers.splice(idx, 1);
+
+                // if deleted current user, logout
+                const { user } = get();
+                if (user && user.id === id) {
+                    set({ user: null, isAuthenticated: false });
+                }
+
+                return true;
+            },
+
             logout: () => {
                 set({ user: null, isAuthenticated: false });
             },
@@ -111,24 +198,29 @@ export const useAuthStore = create<AuthState>()(
                 const { user } = get();
                 if (!user) return false;
 
+                // Admin always has access
+                if (user.role === 'admin') return true;
+
                 const permissions = rolePermissions[user.role] || [];
                 const hasBasicPermission =
                     permissions.includes('*') ||
                     permissions.includes(permission);
 
-                // Check if this is a project management permission that requires admin control
-                if (permission === 'epics' && user.role === 'manager') {
+                if (!hasBasicPermission) return false;
+
+                // If permission maps to a feature toggle, consult settingsStore
+                const featureKey = permissionToFeature[permission];
+                if (featureKey) {
                     const settingsStore = useSettingsStore.getState();
-                    return (
-                        hasBasicPermission &&
-                        settingsStore.isFeatureEnabledForRole(
-                            'projectManagement',
-                            user.role,
-                        )
+                    // Cast because settingsStore expects keyof FeaturePermissions
+                    return settingsStore.isFeatureEnabledForRole(
+                        featureKey as any,
+                        user.role,
                     );
                 }
 
-                return hasBasicPermission;
+                // Default allow when no feature toggle exists
+                return true;
             },
         }),
         {

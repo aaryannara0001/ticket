@@ -1,6 +1,9 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -16,6 +19,7 @@ import jsPDF from 'jspdf';
 import {
     BarChart3,
     Download,
+    FileText,
     Filter,
     PieChart,
     TrendingUp,
@@ -79,6 +83,8 @@ export function ReportsPage() {
     const [priorityFilter, setPriorityFilter] = useState('all');
     const [assigneeFilter, setAssigneeFilter] = useState('all');
     const [datePickerOpen, setDatePickerOpen] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const { theme } = useTheme();
     const isDark = theme === 'dark';
 
@@ -135,66 +141,90 @@ export function ReportsPage() {
     };
 
     return (
-        <div className="container mx-auto px-6 py-8 max-w-7xl">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-foreground mb-2">
-                        Reports & Analytics
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Comprehensive insights into ticket management and team
-                        performance
-                    </p>
-                </div>
+        <div className="space-y-4 sm:space-y-6">
+            <PageHeader
+                title="Reports & Analytics"
+                subtitle="Comprehensive insights into ticket management and team performance"
+                actions={
+                    <>
+                        <Button
+                            onClick={exportToExcel}
+                            variant="outline"
+                            size="sm"
+                            className="border-border text-foreground hover:bg-accent"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            <span className="hidden xs:inline">Export </span>
+                            Excel
+                        </Button>
+                        <Button
+                            onClick={exportToPDF}
+                            size="sm"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            <span className="hidden xs:inline">Export </span>PDF
+                        </Button>
+                    </>
+                }
+            />
 
-                <div className="space-y-6">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center justify-between"
-                    >
-                        <div>
-                            <h1 className="text-3xl font-bold text-foreground">
-                                Reports & Analytics
-                            </h1>
-                            <p className="text-muted-foreground mt-1">
-                                Comprehensive insights into ticket management
-                                and team performance
-                            </p>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <Button
-                                onClick={exportToExcel}
-                                variant="outline"
-                                className="border-border text-foreground hover:bg-accent"
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Export Excel
-                            </Button>
-                            <Button
-                                onClick={exportToPDF}
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Export PDF
-                            </Button>
-                        </div>
-                    </motion.div>
+            <div className="space-y-4 sm:space-y-6">
+                {/* Filters */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <Card className="bg-card border-border">
+                        <CardHeader className="pb-3 sm:pb-4">
+                            <CardTitle className="text-foreground flex items-center gap-2 text-base sm:text-lg">
+                                <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                                Filters & Export
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3 sm:p-4 lg:p-6">
+                            <div className="space-y-4">
+                                {/* Date filters - responsive grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                    <div>
+                                        <Label
+                                            htmlFor="startDate"
+                                            className="text-foreground text-sm font-medium"
+                                        >
+                                            Start Date
+                                        </Label>
+                                        <Input
+                                            id="startDate"
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) =>
+                                                setStartDate(e.target.value)
+                                            }
+                                            className="bg-background border-border text-foreground"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label
+                                            htmlFor="endDate"
+                                            className="text-foreground text-sm font-medium"
+                                        >
+                                            End Date
+                                        </Label>
+                                        <Input
+                                            id="endDate"
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) =>
+                                                setEndDate(e.target.value)
+                                            }
+                                            className="bg-background border-border text-foreground"
+                                        />
+                                    </div>
+                                </div>
 
-                    {/* Filters */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                    >
-                        <Card className="bg-card border-border">
-                            <CardContent className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                {/* Filter dropdowns - responsive grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                                     <div>
                                         <DatePickerWithRange
                                             date={dateRange}
@@ -204,603 +234,582 @@ export function ReportsPage() {
                                             className="bg-background border-border text-foreground"
                                         />
                                     </div>
-
-                                    <Select
-                                        value={departmentFilter}
-                                        onValueChange={setDepartmentFilter}
-                                    >
-                                        <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
-                                            <SelectValue
-                                                placeholder="Department"
-                                                className="text-foreground"
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-popover border-border">
-                                            <SelectItem
-                                                value="all"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                All Departments
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="engineering"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                Engineering
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="it"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                IT
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="support"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                Support
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="marketing"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                Marketing
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-
-                                    <Select
-                                        value={priorityFilter}
-                                        onValueChange={setPriorityFilter}
-                                    >
-                                        <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
-                                            <SelectValue
-                                                placeholder="Priority"
-                                                className="text-foreground"
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-popover border-border">
-                                            <SelectItem
-                                                value="all"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                All Priority
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="critical"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                Critical
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="high"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                High
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="medium"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                Medium
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="low"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                Low
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-
-                                    <Select
-                                        value={assigneeFilter}
-                                        onValueChange={setAssigneeFilter}
-                                    >
-                                        <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
-                                            <SelectValue
-                                                placeholder="Assignee"
-                                                className="text-foreground"
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-popover border-border">
-                                            <SelectItem
-                                                value="all"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                All Assignees
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="john"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                John Admin
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="sarah"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                Sarah Manager
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="mike"
-                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                            >
-                                                Mike Developer
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-
-                                    <Button
-                                        onClick={() => {
-                                            setDepartmentFilter('all');
-                                            setPriorityFilter('all');
-                                            setAssigneeFilter('all');
-                                        }}
-                                        variant="outline"
-                                        className="border-border text-foreground hover:bg-accent"
-                                    >
-                                        <Filter className="w-4 h-4 mr-2" />
-                                        Clear
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-
-                    {/* Reports Content */}
-                    <div id="reports-content">
-                        <Tabs defaultValue="overview" className="space-y-6">
-                            <TabsList className="grid w-full grid-cols-4 bg-muted">
-                                <TabsTrigger
-                                    value="overview"
-                                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                                >
-                                    Overview
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="departments"
-                                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                                >
-                                    Departments
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="trends"
-                                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                                >
-                                    Trends
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="performance"
-                                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                                >
-                                    Performance
-                                </TabsTrigger>
-                            </TabsList>
-
-                            <TabsContent value="overview" className="space-y-6">
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                                >
-                                    <Card className="bg-card border-border">
-                                        <CardHeader>
-                                            <CardTitle className="text-foreground flex items-center">
-                                                <BarChart3 className="w-5 h-5 mr-2 text-primary" />
-                                                Tickets by Department
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <ResponsiveContainer
-                                                width="100%"
-                                                height={300}
-                                            >
-                                                <BarChart
-                                                    data={ticketsByDepartment}
+                                    <div>
+                                        <Select
+                                            value={departmentFilter}
+                                            onValueChange={setDepartmentFilter}
+                                        >
+                                            <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
+                                                <SelectValue
+                                                    placeholder="Department"
+                                                    className="text-foreground"
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-popover border-border">
+                                                <SelectItem
+                                                    value="all"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
                                                 >
-                                                    <CartesianGrid
-                                                        strokeDasharray="3 3"
-                                                        stroke={
+                                                    All Departments
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="engineering"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    Engineering
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="it"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    IT
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="support"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    Support
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="marketing"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    Marketing
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Select
+                                            value={priorityFilter}
+                                            onValueChange={setPriorityFilter}
+                                        >
+                                            <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
+                                                <SelectValue
+                                                    placeholder="Priority"
+                                                    className="text-foreground"
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-popover border-border">
+                                                <SelectItem
+                                                    value="all"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    All Priority
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="critical"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    Critical
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="high"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    High
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="medium"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    Medium
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="low"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    Low
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Select
+                                            value={assigneeFilter}
+                                            onValueChange={setAssigneeFilter}
+                                        >
+                                            <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary">
+                                                <SelectValue
+                                                    placeholder="Assignee"
+                                                    className="text-foreground"
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-popover border-border">
+                                                <SelectItem
+                                                    value="all"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    All Assignees
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="john"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    John Admin
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="sarah"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    Sarah Manager
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="mike"
+                                                    className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                                >
+                                                    Mike Developer
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    onClick={() => {
+                                        setDepartmentFilter('all');
+                                        setPriorityFilter('all');
+                                        setAssigneeFilter('all');
+                                    }}
+                                    variant="outline"
+                                    className="border-border text-foreground hover:bg-accent"
+                                >
+                                    <Filter className="w-4 h-4 mr-2" />
+                                    Clear
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+
+                {/* Reports Content */}
+                <div id="reports-content">
+                    <Tabs defaultValue="overview" className="space-y-6">
+                        <TabsList className="grid w-full grid-cols-4 bg-muted">
+                            <TabsTrigger
+                                value="overview"
+                                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                            >
+                                Overview
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="departments"
+                                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                            >
+                                Departments
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="trends"
+                                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                            >
+                                Trends
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="performance"
+                                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                            >
+                                Performance
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="overview" className="space-y-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                            >
+                                <Card className="bg-card border-border">
+                                    <CardHeader>
+                                        <CardTitle className="text-foreground flex items-center">
+                                            <BarChart3 className="w-5 h-5 mr-2 text-primary" />
+                                            Tickets by Department
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ResponsiveContainer
+                                            width="100%"
+                                            height={300}
+                                        >
+                                            <BarChart
+                                                data={ticketsByDepartment}
+                                            >
+                                                <CartesianGrid
+                                                    strokeDasharray="3 3"
+                                                    stroke={
+                                                        isDark
+                                                            ? '#4B5563'
+                                                            : '#E5E7EB'
+                                                    }
+                                                />
+                                                <XAxis
+                                                    dataKey="department"
+                                                    tick={{
+                                                        fill: isDark
+                                                            ? '#D1D5DB'
+                                                            : '#374151',
+                                                        fontSize: 12,
+                                                    }}
+                                                    stroke={
+                                                        isDark
+                                                            ? '#6B7280'
+                                                            : '#9CA3AF'
+                                                    }
+                                                />
+                                                <YAxis
+                                                    tick={{
+                                                        fill: isDark
+                                                            ? '#D1D5DB'
+                                                            : '#374151',
+                                                        fontSize: 12,
+                                                    }}
+                                                    stroke={
+                                                        isDark
+                                                            ? '#6B7280'
+                                                            : '#9CA3AF'
+                                                    }
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: isDark
+                                                            ? '#1B2320'
+                                                            : '#FFFFFF',
+                                                        border: `1px solid ${
                                                             isDark
                                                                 ? '#4B5563'
                                                                 : '#E5E7EB'
-                                                        }
-                                                    />
-                                                    <XAxis
-                                                        dataKey="department"
-                                                        tick={{
-                                                            fill: isDark
-                                                                ? '#D1D5DB'
-                                                                : '#374151',
-                                                            fontSize: 12,
-                                                        }}
-                                                        stroke={
-                                                            isDark
-                                                                ? '#6B7280'
-                                                                : '#9CA3AF'
-                                                        }
-                                                    />
-                                                    <YAxis
-                                                        tick={{
-                                                            fill: isDark
-                                                                ? '#D1D5DB'
-                                                                : '#374151',
-                                                            fontSize: 12,
-                                                        }}
-                                                        stroke={
-                                                            isDark
-                                                                ? '#6B7280'
-                                                                : '#9CA3AF'
-                                                        }
-                                                    />
-                                                    <Tooltip
-                                                        contentStyle={{
-                                                            backgroundColor:
-                                                                isDark
-                                                                    ? '#1B2320'
-                                                                    : '#FFFFFF',
-                                                            border: `1px solid ${
-                                                                isDark
-                                                                    ? '#4B5563'
-                                                                    : '#E5E7EB'
-                                                            }`,
-                                                            borderRadius: '8px',
-                                                            color: isDark
-                                                                ? '#FFFFFF'
-                                                                : '#111827',
-                                                        }}
-                                                    />
-                                                    <Bar
-                                                        dataKey="open"
-                                                        fill="#6B7280"
-                                                        name="Open"
-                                                    />
-                                                    <Bar
-                                                        dataKey="inProgress"
-                                                        fill="#FACC15"
-                                                        name="In Progress"
-                                                    />
-                                                    <Bar
-                                                        dataKey="closed"
-                                                        fill="#4ADE80"
-                                                        name="Closed"
-                                                    />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </CardContent>
-                                    </Card>
+                                                        }`,
+                                                        borderRadius: '8px',
+                                                        color: isDark
+                                                            ? '#FFFFFF'
+                                                            : '#111827',
+                                                    }}
+                                                />
+                                                <Bar
+                                                    dataKey="open"
+                                                    fill="#6B7280"
+                                                    name="Open"
+                                                />
+                                                <Bar
+                                                    dataKey="inProgress"
+                                                    fill="#FACC15"
+                                                    name="In Progress"
+                                                />
+                                                <Bar
+                                                    dataKey="closed"
+                                                    fill="#4ADE80"
+                                                    name="Closed"
+                                                />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </CardContent>
+                                </Card>
 
-                                    <Card className="bg-card border-border">
-                                        <CardHeader>
-                                            <CardTitle className="text-foreground flex items-center">
-                                                <PieChart className="w-5 h-5 mr-2 text-primary" />
-                                                Tickets by Priority
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <ResponsiveContainer
-                                                width="100%"
-                                                height={300}
-                                            >
-                                                <RechartsPieChart>
-                                                    <Pie
-                                                        data={ticketsByPriority}
-                                                        cx="50%"
-                                                        cy="50%"
-                                                        innerRadius={60}
-                                                        outerRadius={100}
-                                                        paddingAngle={5}
-                                                        dataKey="count"
-                                                    >
-                                                        {ticketsByPriority.map(
-                                                            (entry, index) => (
-                                                                <Cell
-                                                                    key={`cell-${index}`}
-                                                                    fill={
-                                                                        entry.color
-                                                                    }
-                                                                />
-                                                            ),
-                                                        )}
-                                                    </Pie>
-                                                    <Tooltip
-                                                        contentStyle={{
-                                                            backgroundColor:
-                                                                isDark
-                                                                    ? '#1B2320'
-                                                                    : '#FFFFFF',
-                                                            border: `1px solid ${
-                                                                isDark
-                                                                    ? '#4B5563'
-                                                                    : '#E5E7EB'
-                                                            }`,
-                                                            borderRadius: '8px',
-                                                            color: isDark
-                                                                ? '#FFFFFF'
-                                                                : '#111827',
-                                                        }}
-                                                    />
-                                                    <Legend
-                                                        wrapperStyle={{
-                                                            color: isDark
-                                                                ? '#D1D5DB'
-                                                                : '#374151',
-                                                        }}
-                                                    />
-                                                </RechartsPieChart>
-                                            </ResponsiveContainer>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            </TabsContent>
+                                <Card className="bg-card border-border">
+                                    <CardHeader>
+                                        <CardTitle className="text-foreground flex items-center">
+                                            <PieChart className="w-5 h-5 mr-2 text-primary" />
+                                            Tickets by Priority
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ResponsiveContainer
+                                            width="100%"
+                                            height={300}
+                                        >
+                                            <RechartsPieChart>
+                                                <Pie
+                                                    data={ticketsByPriority}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={100}
+                                                    paddingAngle={5}
+                                                    dataKey="count"
+                                                >
+                                                    {ticketsByPriority.map(
+                                                        (entry, index) => (
+                                                            <Cell
+                                                                key={`cell-${index}`}
+                                                                fill={
+                                                                    entry.color
+                                                                }
+                                                            />
+                                                        ),
+                                                    )}
+                                                </Pie>
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: isDark
+                                                            ? '#1B2320'
+                                                            : '#FFFFFF',
+                                                        border: `1px solid ${
+                                                            isDark
+                                                                ? '#4B5563'
+                                                                : '#E5E7EB'
+                                                        }`,
+                                                        borderRadius: '8px',
+                                                        color: isDark
+                                                            ? '#FFFFFF'
+                                                            : '#111827',
+                                                    }}
+                                                />
+                                                <Legend
+                                                    wrapperStyle={{
+                                                        color: isDark
+                                                            ? '#D1D5DB'
+                                                            : '#374151',
+                                                    }}
+                                                />
+                                            </RechartsPieChart>
+                                        </ResponsiveContainer>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </TabsContent>
 
-                            <TabsContent
-                                value="departments"
-                                className="space-y-6"
+                        <TabsContent value="departments" className="space-y-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
                             >
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                >
-                                    <Card className="bg-card border-border">
-                                        <CardHeader>
-                                            <CardTitle className="text-foreground">
-                                                Department Performance
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-4">
-                                                {ticketsByDepartment.map(
-                                                    (dept) => {
-                                                        const total =
-                                                            dept.open +
-                                                            dept.inProgress +
-                                                            dept.closed;
-                                                        const completionRate =
-                                                            (dept.closed /
-                                                                total) *
-                                                            100;
+                                <Card className="bg-card border-border">
+                                    <CardHeader>
+                                        <CardTitle className="text-foreground">
+                                            Department Performance
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            {ticketsByDepartment.map((dept) => {
+                                                const total =
+                                                    dept.open +
+                                                    dept.inProgress +
+                                                    dept.closed;
+                                                const completionRate =
+                                                    (dept.closed / total) * 100;
 
-                                                        return (
-                                                            <div
-                                                                key={
+                                                return (
+                                                    <div
+                                                        key={dept.department}
+                                                        className="p-4 bg-muted rounded-lg"
+                                                    >
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <h4 className="text-foreground font-medium">
+                                                                {
                                                                     dept.department
                                                                 }
-                                                                className="p-4 bg-muted rounded-lg"
-                                                            >
-                                                                <div className="flex items-center justify-between mb-2">
-                                                                    <h4 className="text-foreground font-medium">
-                                                                        {
-                                                                            dept.department
-                                                                        }
-                                                                    </h4>
-                                                                    <span className="text-primary font-medium">
-                                                                        {completionRate.toFixed(
-                                                                            1,
-                                                                        )}
-                                                                        %
-                                                                        completion
-                                                                    </span>
-                                                                </div>
-                                                                <div className="grid grid-cols-3 gap-4 text-sm">
-                                                                    <div>
-                                                                        <span className="text-muted-foreground">
-                                                                            Open:{' '}
-                                                                        </span>
-                                                                        <span className="text-foreground">
-                                                                            {
-                                                                                dept.open
-                                                                            }
-                                                                        </span>
-                                                                    </div>
-                                                                    <div>
-                                                                        <span className="text-yellow-500">
-                                                                            In
-                                                                            Progress:{' '}
-                                                                        </span>
-                                                                        <span className="text-foreground">
-                                                                            {
-                                                                                dept.inProgress
-                                                                            }
-                                                                        </span>
-                                                                    </div>
-                                                                    <div>
-                                                                        <span className="text-primary">
-                                                                            Closed:{' '}
-                                                                        </span>
-                                                                        <span className="text-foreground">
-                                                                            {
-                                                                                dept.closed
-                                                                            }
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
+                                                            </h4>
+                                                            <span className="text-primary font-medium">
+                                                                {completionRate.toFixed(
+                                                                    1,
+                                                                )}
+                                                                % completion
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 gap-4 text-sm">
+                                                            <div>
+                                                                <span className="text-muted-foreground">
+                                                                    Open:{' '}
+                                                                </span>
+                                                                <span className="text-foreground">
+                                                                    {dept.open}
+                                                                </span>
                                                             </div>
-                                                        );
-                                                    },
-                                                )}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            </TabsContent>
+                                                            <div>
+                                                                <span className="text-yellow-500">
+                                                                    In Progress:{' '}
+                                                                </span>
+                                                                <span className="text-foreground">
+                                                                    {
+                                                                        dept.inProgress
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-primary">
+                                                                    Closed:{' '}
+                                                                </span>
+                                                                <span className="text-foreground">
+                                                                    {
+                                                                        dept.closed
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </TabsContent>
 
-                            <TabsContent value="trends" className="space-y-6">
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                >
-                                    <Card className="bg-card border-border">
-                                        <CardHeader>
-                                            <CardTitle className="text-foreground flex items-center">
-                                                <TrendingUp className="w-5 h-5 mr-2 text-primary" />
-                                                Ticket Trends Over Time
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <ResponsiveContainer
-                                                width="100%"
-                                                height={400}
-                                            >
-                                                <LineChart data={ticketTrends}>
-                                                    <CartesianGrid
-                                                        strokeDasharray="3 3"
-                                                        stroke={
+                        <TabsContent value="trends" className="space-y-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                            >
+                                <Card className="bg-card border-border">
+                                    <CardHeader>
+                                        <CardTitle className="text-foreground flex items-center">
+                                            <TrendingUp className="w-5 h-5 mr-2 text-primary" />
+                                            Ticket Trends Over Time
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ResponsiveContainer
+                                            width="100%"
+                                            height={400}
+                                        >
+                                            <LineChart data={ticketTrends}>
+                                                <CartesianGrid
+                                                    strokeDasharray="3 3"
+                                                    stroke={
+                                                        isDark
+                                                            ? '#4B5563'
+                                                            : '#E5E7EB'
+                                                    }
+                                                />
+                                                <XAxis
+                                                    dataKey="month"
+                                                    tick={{
+                                                        fill: isDark
+                                                            ? '#D1D5DB'
+                                                            : '#374151',
+                                                        fontSize: 12,
+                                                    }}
+                                                    stroke={
+                                                        isDark
+                                                            ? '#6B7280'
+                                                            : '#9CA3AF'
+                                                    }
+                                                />
+                                                <YAxis
+                                                    tick={{
+                                                        fill: isDark
+                                                            ? '#D1D5DB'
+                                                            : '#374151',
+                                                        fontSize: 12,
+                                                    }}
+                                                    stroke={
+                                                        isDark
+                                                            ? '#6B7280'
+                                                            : '#9CA3AF'
+                                                    }
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: isDark
+                                                            ? '#1B2320'
+                                                            : '#FFFFFF',
+                                                        border: `1px solid ${
                                                             isDark
                                                                 ? '#4B5563'
                                                                 : '#E5E7EB'
-                                                        }
-                                                    />
-                                                    <XAxis
-                                                        dataKey="month"
-                                                        tick={{
-                                                            fill: isDark
-                                                                ? '#D1D5DB'
-                                                                : '#374151',
-                                                            fontSize: 12,
-                                                        }}
-                                                        stroke={
-                                                            isDark
-                                                                ? '#6B7280'
-                                                                : '#9CA3AF'
-                                                        }
-                                                    />
-                                                    <YAxis
-                                                        tick={{
-                                                            fill: isDark
-                                                                ? '#D1D5DB'
-                                                                : '#374151',
-                                                            fontSize: 12,
-                                                        }}
-                                                        stroke={
-                                                            isDark
-                                                                ? '#6B7280'
-                                                                : '#9CA3AF'
-                                                        }
-                                                    />
-                                                    <Tooltip
-                                                        contentStyle={{
-                                                            backgroundColor:
-                                                                isDark
-                                                                    ? '#1B2320'
-                                                                    : '#FFFFFF',
-                                                            border: `1px solid ${
-                                                                isDark
-                                                                    ? '#4B5563'
-                                                                    : '#E5E7EB'
-                                                            }`,
-                                                            borderRadius: '8px',
-                                                            color: isDark
-                                                                ? '#FFFFFF'
-                                                                : '#111827',
-                                                        }}
-                                                    />
-                                                    <Legend
-                                                        wrapperStyle={{
-                                                            color: isDark
-                                                                ? '#D1D5DB'
-                                                                : '#374151',
-                                                        }}
-                                                    />
-                                                    <Line
-                                                        type="monotone"
-                                                        dataKey="created"
-                                                        stroke="#A3FF12"
-                                                        strokeWidth={3}
-                                                        name="Created"
-                                                    />
-                                                    <Line
-                                                        type="monotone"
-                                                        dataKey="resolved"
-                                                        stroke="#4ADE80"
-                                                        strokeWidth={3}
-                                                        name="Resolved"
-                                                    />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            </TabsContent>
+                                                        }`,
+                                                        borderRadius: '8px',
+                                                        color: isDark
+                                                            ? '#FFFFFF'
+                                                            : '#111827',
+                                                    }}
+                                                />
+                                                <Legend
+                                                    wrapperStyle={{
+                                                        color: isDark
+                                                            ? '#D1D5DB'
+                                                            : '#374151',
+                                                    }}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="created"
+                                                    stroke="#A3FF12"
+                                                    strokeWidth={3}
+                                                    name="Created"
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="resolved"
+                                                    stroke="#4ADE80"
+                                                    strokeWidth={3}
+                                                    name="Resolved"
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </TabsContent>
 
-                            <TabsContent
-                                value="performance"
-                                className="space-y-6"
+                        <TabsContent value="performance" className="space-y-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
                             >
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                >
-                                    <Card className="bg-card border-border">
-                                        <CardHeader>
-                                            <CardTitle className="text-foreground flex items-center">
-                                                <Users className="w-5 h-5 mr-2 text-primary" />
-                                                Team Performance
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-4">
-                                                {teamPerformance.map(
-                                                    (member) => (
-                                                        <div
-                                                            key={member.name}
-                                                            className="p-4 bg-muted rounded-lg"
-                                                        >
-                                                            <div className="flex items-center justify-between mb-3">
-                                                                <h4 className="text-foreground font-medium">
-                                                                    {
-                                                                        member.name
-                                                                    }
-                                                                </h4>
-                                                                <div className="flex items-center space-x-4">
-                                                                    <span className="text-primary font-medium">
-                                                                        {
-                                                                            member.efficiency
-                                                                        }
-                                                                        %
-                                                                        efficiency
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                                                <div>
-                                                                    <span className="text-muted-foreground">
-                                                                        Resolved:{' '}
-                                                                    </span>
-                                                                    <span className="text-foreground">
-                                                                        {
-                                                                            member.resolved
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                                <div>
-                                                                    <span className="text-muted-foreground">
-                                                                        Assigned:{' '}
-                                                                    </span>
-                                                                    <span className="text-foreground">
-                                                                        {
-                                                                            member.assigned
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                            </div>
+                                <Card className="bg-card border-border">
+                                    <CardHeader>
+                                        <CardTitle className="text-foreground flex items-center">
+                                            <Users className="w-5 h-5 mr-2 text-primary" />
+                                            Team Performance
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            {teamPerformance.map((member) => (
+                                                <div
+                                                    key={member.name}
+                                                    className="p-4 bg-muted rounded-lg"
+                                                >
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <h4 className="text-foreground font-medium">
+                                                            {member.name}
+                                                        </h4>
+                                                        <div className="flex items-center space-x-4">
+                                                            <span className="text-primary font-medium">
+                                                                {
+                                                                    member.efficiency
+                                                                }
+                                                                % efficiency
+                                                            </span>
                                                         </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            </TabsContent>
-                        </Tabs>
-                    </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                                        <div>
+                                                            <span className="text-muted-foreground">
+                                                                Resolved:{' '}
+                                                            </span>
+                                                            <span className="text-foreground">
+                                                                {
+                                                                    member.resolved
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-muted-foreground">
+                                                                Assigned:{' '}
+                                                            </span>
+                                                            <span className="text-foreground">
+                                                                {
+                                                                    member.assigned
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </TabsContent>
+                    </Tabs>
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 }

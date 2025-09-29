@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MultiSelect } from '@/components/ui/multi-select';
 import {
     Select,
     SelectContent,
@@ -18,8 +19,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useTicketStore } from '@/store/ticketStore';
-import { Upload, X } from 'lucide-react';
-import { useState } from 'react';
+import { Upload, User, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 interface CreateTicketModalProps {
@@ -27,23 +28,35 @@ interface CreateTicketModalProps {
     onOpenChange: (open: boolean) => void;
 }
 
-const mockUsers = [
-    { id: '1', name: 'John Admin', department: 'IT' },
-    { id: '2', name: 'Sarah Manager', department: 'Engineering' },
-    { id: '3', name: 'Mike Developer', department: 'Engineering' },
-    { id: '4', name: 'Lisa Client', department: 'External' },
+// use users from auth store so the assignee list updates with real users
+const departments = [
+    { value: 'Developer', label: 'Developer' },
+    { value: 'Support', label: 'Support' },
+    { value: 'IT', label: 'IT' },
 ];
 
 export function CreateTicketModal({
     open,
     onOpenChange,
 }: CreateTicketModalProps) {
+    const [users, setUsers] = useState(() =>
+        useAuthStore.getState().getUsers(),
+    );
+
+    useEffect(() => {
+        // subscribe to auth store changes and refresh users list
+        const unsubscribe = useAuthStore.subscribe(() => {
+            setUsers(useAuthStore.getState().getUsers());
+        });
+        return () => unsubscribe();
+    }, []);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         type: '',
         priority: '',
         assigneeId: '',
+        assigneeIds: [] as string[],
         department: '',
         dueDate: '',
     });
@@ -86,6 +99,10 @@ export function CreateTicketModal({
                 status: 'open',
                 reporterId: user?.id || '1',
                 assigneeId: formData.assigneeId || undefined,
+                assigneeIds:
+                    formData.assigneeIds.length > 0
+                        ? formData.assigneeIds
+                        : undefined,
                 department:
                     formData.department || user?.department || 'General',
                 dueDate: formData.dueDate
@@ -107,12 +124,13 @@ export function CreateTicketModal({
                 type: '',
                 priority: '',
                 assigneeId: '',
+                assigneeIds: [],
                 department: '',
                 dueDate: '',
             });
             setAttachments([]);
             onOpenChange(false);
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Error',
                 description: 'Failed to create ticket',
@@ -266,38 +284,30 @@ export function CreateTicketModal({
 
                         <div className="space-y-2">
                             <Label
-                                htmlFor="assignee"
+                                htmlFor="assignees"
                                 className="text-popover-foreground font-medium"
                             >
-                                Assignee
+                                Assignees
                             </Label>
-                            <Select
-                                value={formData.assigneeId}
-                                onValueChange={(value) =>
+                            <MultiSelect
+                                options={users.map((user) => ({
+                                    label: `${user.name} (${
+                                        user.department || 'Unknown'
+                                    })`,
+                                    value: user.id,
+                                    icon: User,
+                                }))}
+                                selected={formData.assigneeIds}
+                                onChange={(selected) =>
                                     setFormData((prev) => ({
                                         ...prev,
-                                        assigneeId: value,
+                                        assigneeIds: selected,
                                     }))
                                 }
-                            >
-                                <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground">
-                                    <SelectValue
-                                        placeholder="Select assignee"
-                                        className="text-foreground"
-                                    />
-                                </SelectTrigger>
-                                <SelectContent className="bg-popover border-border">
-                                    {mockUsers.map((user) => (
-                                        <SelectItem
-                                            key={user.id}
-                                            value={user.id}
-                                            className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                        >
-                                            {user.name} ({user.department})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Select assignees"
+                                className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                                maxCount={2}
+                            />
                         </div>
                     </div>
 
@@ -309,18 +319,33 @@ export function CreateTicketModal({
                             >
                                 Department
                             </Label>
-                            <Input
-                                id="department"
+                            <Select
                                 value={formData.department}
-                                onChange={(e) =>
+                                onValueChange={(value) =>
                                     setFormData((prev) => ({
                                         ...prev,
-                                        department: e.target.value,
+                                        department: value,
                                     }))
                                 }
-                                className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary placeholder-muted-foreground"
-                                placeholder="Enter department"
-                            />
+                            >
+                                <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground">
+                                    <SelectValue
+                                        placeholder="Select department"
+                                        className="text-foreground"
+                                    />
+                                </SelectTrigger>
+                                <SelectContent className="bg-popover border-border">
+                                    {departments.map((dept) => (
+                                        <SelectItem
+                                            key={dept.value}
+                                            value={dept.value}
+                                            className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                        >
+                                            {dept.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="space-y-2">
@@ -361,7 +386,7 @@ export function CreateTicketModal({
                                     description: e.target.value,
                                 }))
                             }
-                            className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary min-h-[120px] placeholder-muted-foreground"
+                            className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary sm:min-h-[120px] placeholder-muted-foreground"
                             placeholder="Describe the ticket in detail..."
                             required
                         />

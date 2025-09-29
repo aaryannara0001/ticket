@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -231,27 +232,21 @@ export function EpicsPage() {
 
     return (
         <div className="space-y-6">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between"
-            >
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground">
-                        Projects & Stories
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Manage projects, stories, and sub-tasks
-                    </p>
-                </div>
-                <Button
-                    onClick={() => setShowCreateModal(true)}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Project
-                </Button>
-            </motion.div>
+            <PageHeader
+                title="Projects"
+                actions={
+                    canAccessProjects ? (
+                        <Button
+                            onClick={() => setShowCreateModal(true)}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            size="sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Project
+                        </Button>
+                    ) : undefined
+                }
+            />
 
             <div className="space-y-6">
                 {projects.map((project, index) => (
@@ -392,7 +387,7 @@ export function EpicsPage() {
                                                                 ) && (
                                                                     <Button
                                                                         size="sm"
-                                                                        variant="ghost"
+                                                                        variant="outline"
                                                                         onClick={() =>
                                                                             openCreateSubTaskModal(
                                                                                 project.id,
@@ -400,7 +395,7 @@ export function EpicsPage() {
                                                                                 story.title,
                                                                             )
                                                                         }
-                                                                        className="text-primary hover:bg-primary/10"
+                                                                        className="border-primary text-primary hover:bg-primary/10"
                                                                     >
                                                                         <Plus className="w-3 h-3 mr-1" />
                                                                         Add
@@ -411,7 +406,7 @@ export function EpicsPage() {
                                                                     {
                                                                         story.subTasks.filter(
                                                                             (
-                                                                                t,
+                                                                                t: any,
                                                                             ) =>
                                                                                 t.completed,
                                                                         ).length
@@ -445,8 +440,8 @@ export function EpicsPage() {
                                                                     <div className="space-y-2">
                                                                         {story.acceptanceCriteria.map(
                                                                             (
-                                                                                criteria,
-                                                                                index,
+                                                                                criteria: string,
+                                                                                index: number,
                                                                             ) => (
                                                                                 <div
                                                                                     key={
@@ -474,7 +469,7 @@ export function EpicsPage() {
                                                                     <div className="space-y-2">
                                                                         {story.subTasks.map(
                                                                             (
-                                                                                subTask,
+                                                                                subTask: any,
                                                                             ) => (
                                                                                 <div
                                                                                     key={

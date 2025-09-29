@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,16 +55,20 @@ export function TicketsPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [priorityFilter, setPriorityFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
+    const [assignmentFilter, setAssignmentFilter] = useState<
+        'all' | 'assigned' | 'reported'
+    >('all');
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
-    const { tickets, fetchTickets, loading } = useTicketStore();
+    const { tickets, loading } = useTicketStore();
     const { hasPermission } = useAuthStore();
 
     useEffect(() => {
-        fetchTickets();
-    }, [fetchTickets]);
+        // Call the store's fetchTickets directly to avoid depending on function identity
+        useTicketStore.getState().fetchTickets(assignmentFilter);
+    }, [assignmentFilter]);
 
     const filteredTickets = tickets.filter((ticket) => {
         const matchesSearch =
@@ -104,7 +109,8 @@ export function TicketsPage() {
                     title: 'Success',
                     description: 'Ticket deleted successfully',
                 });
-            } catch (error) {
+            } catch {
+                // intentionally ignore error details here
                 toast({
                     title: 'Error',
                     description: 'Failed to delete ticket',
@@ -154,18 +160,18 @@ export function TicketsPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div className="h-8 bg-gray-700 rounded w-32 animate-pulse"></div>
-                    <div className="h-10 bg-gray-700 rounded w-24 animate-pulse"></div>
+            <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                    <div className="h-6 sm:h-8 bg-muted rounded w-24 sm:w-32 animate-pulse"></div>
+                    <div className="h-8 sm:h-10 bg-muted rounded w-20 sm:w-24 animate-pulse"></div>
                 </div>
-                <Card className="bg-card border-gray-700">
-                    <CardContent className="p-6">
-                        <div className="space-y-4">
+                <Card className="bg-card border-border">
+                    <CardContent className="p-3 sm:p-4 md:p-6">
+                        <div className="space-y-3 sm:space-y-4">
                             {Array.from({ length: 5 }).map((_, i) => (
                                 <div
                                     key={i}
-                                    className="h-12 bg-muted rounded animate-pulse"
+                                    className="h-10 sm:h-12 bg-muted rounded animate-pulse"
                                 ></div>
                             ))}
                         </div>
@@ -176,51 +182,54 @@ export function TicketsPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between"
-            >
-                <div>
-                    <h1 className="text-4xl font-bold text-foreground tracking-tight">
-                        Tickets
-                    </h1>
-                    <p className="text-muted-foreground mt-2 text-lg font-medium">
-                        Manage and track all tickets
-                    </p>
-                </div>
-                <div className="flex items-center space-x-4">
-                    <Button
-                        onClick={exportToCSV}
-                        variant="outline"
-                        className="border-border text-foreground hover:bg-accent hover:border-border"
-                    >
-                        <Download className="w-4 h-4 mr-2" />
-                        Export
-                    </Button>
-                    {hasPermission('create_ticket') && (
+        <div className="space-y-4 sm:space-y-6">
+            <PageHeader
+                title={
+                    assignmentFilter === 'assigned'
+                        ? 'My Assigned Tickets'
+                        : assignmentFilter === 'reported'
+                        ? 'My Reported Tickets'
+                        : 'All Tickets'
+                }
+                subtitle={`${filteredTickets.length} ticket${
+                    filteredTickets.length !== 1 ? 's' : ''
+                }`}
+                actions={
+                    <>
                         <Button
-                            onClick={() => setShowCreateModal(true)}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            onClick={exportToCSV}
+                            variant="outline"
+                            size="sm"
+                            className="border-border text-foreground hover:bg-accent hover:border-border"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Create Ticket
+                            <Download className="w-4 h-4 mr-1 sm:mr-2" />
+                            <span className="hidden xs:inline">Export</span>
                         </Button>
-                    )}
-                </div>
-            </motion.div>
+                        {hasPermission('create_ticket') && (
+                            <Button
+                                onClick={() => setShowCreateModal(true)}
+                                size="sm"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            >
+                                <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                                <span className="hidden xs:inline">Create</span>
+                            </Button>
+                        )}
+                    </>
+                }
+            />
 
-            {/* Filters */}
+            {/* Filters - Mobile-first responsive design */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
             >
                 <Card className="bg-card border-border shadow-lg">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col lg:flex-row gap-4">
-                            <div className="relative flex-1">
+                    <CardContent className="p-3 sm:p-4 md:p-6">
+                        <div className="space-y-3 sm:space-y-4">
+                            {/* Search bar - full width on all screens */}
+                            <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                                 <Input
                                     placeholder="Search tickets..."
@@ -231,14 +240,72 @@ export function TicketsPage() {
                                     className="pl-10 bg-background border-border text-foreground placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                                 />
                             </div>
-                            <div className="flex gap-3">
+
+                            {/* Assignment Filter Buttons */}
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    variant={
+                                        assignmentFilter === 'all'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
+                                    size="sm"
+                                    onClick={() => setAssignmentFilter('all')}
+                                    className={
+                                        assignmentFilter === 'all'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'border-border hover:bg-accent hover:border-primary/30'
+                                    }
+                                >
+                                    All Tickets
+                                </Button>
+                                <Button
+                                    variant={
+                                        assignmentFilter === 'assigned'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
+                                    size="sm"
+                                    onClick={() =>
+                                        setAssignmentFilter('assigned')
+                                    }
+                                    className={
+                                        assignmentFilter === 'assigned'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'border-border hover:bg-accent hover:border-primary/30'
+                                    }
+                                >
+                                    Assigned to Me
+                                </Button>
+                                <Button
+                                    variant={
+                                        assignmentFilter === 'reported'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
+                                    size="sm"
+                                    onClick={() =>
+                                        setAssignmentFilter('reported')
+                                    }
+                                    className={
+                                        assignmentFilter === 'reported'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'border-border hover:bg-accent hover:border-primary/30'
+                                    }
+                                >
+                                    Reported by Me
+                                </Button>
+                            </div>
+
+                            {/* Filters - responsive grid layout */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                                 <Select
                                     value={statusFilter}
                                     onValueChange={setStatusFilter}
                                 >
-                                    <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground w-40">
+                                    <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground">
                                         <SelectValue
-                                            placeholder="Status"
+                                            placeholder="All Status"
                                             className="text-foreground"
                                         />
                                     </SelectTrigger>
@@ -279,9 +346,9 @@ export function TicketsPage() {
                                     value={priorityFilter}
                                     onValueChange={setPriorityFilter}
                                 >
-                                    <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground w-40">
+                                    <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground">
                                         <SelectValue
-                                            placeholder="Priority"
+                                            placeholder="All Priority"
                                             className="text-foreground"
                                         />
                                     </SelectTrigger>
@@ -322,9 +389,9 @@ export function TicketsPage() {
                                     value={typeFilter}
                                     onValueChange={setTypeFilter}
                                 >
-                                    <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground w-40">
+                                    <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground">
                                         <SelectValue
-                                            placeholder="Type"
+                                            placeholder="All Types"
                                             className="text-foreground"
                                         />
                                     </SelectTrigger>
@@ -367,48 +434,194 @@ export function TicketsPage() {
                 </Card>
             </motion.div>
 
-            {/* Tickets Table */}
+            {/* Tickets - Responsive Table/Cards */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
             >
                 <Card className="bg-card border-border shadow-lg">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-foreground text-lg font-semibold">
+                    <CardHeader className="pb-3 sm:pb-4">
+                        <CardTitle className="text-foreground text-base sm:text-lg font-semibold">
                             Tickets ({filteredTickets.length})
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto">
+                    <CardContent className="p-0 sm:p-6">
+                        {/* Mobile Card View */}
+                        <div className="block sm:hidden">
+                            <div className="space-y-3 p-3">
+                                {filteredTickets.map((ticket) => (
+                                    <div
+                                        key={ticket.id}
+                                        className="bg-accent/20 border border-border rounded-lg p-4 space-y-3"
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1">
+                                                <div className="font-mono font-semibold text-foreground text-sm">
+                                                    {ticket.key}
+                                                </div>
+                                                <div className="font-medium text-foreground">
+                                                    {ticket.title}
+                                                </div>
+                                            </div>
+                                            <div className="flex space-x-1">
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() =>
+                                                        handleViewTicket(ticket)
+                                                    }
+                                                    className="text-primary hover:bg-primary/10 p-1"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
+                                                {hasPermission('tickets') && (
+                                                    <>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                handleEditTicket(
+                                                                    ticket,
+                                                                )
+                                                            }
+                                                            className="text-yellow-500 hover:bg-yellow-500/10 p-1"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                handleDeleteTicket(
+                                                                    ticket,
+                                                                )
+                                                            }
+                                                            className="text-destructive hover:bg-destructive/10 p-1"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            <Badge
+                                                style={{
+                                                    backgroundColor:
+                                                        typeColors[
+                                                            ticket.type
+                                                        ] + '30',
+                                                    color: typeColors[
+                                                        ticket.type
+                                                    ],
+                                                    border: `1px solid ${
+                                                        typeColors[ticket.type]
+                                                    }60`,
+                                                }}
+                                                className="font-medium text-xs"
+                                            >
+                                                {ticket.type}
+                                            </Badge>
+                                            <Badge
+                                                style={{
+                                                    backgroundColor:
+                                                        priorityColors[
+                                                            ticket.priority
+                                                        ] + '30',
+                                                    color: priorityColors[
+                                                        ticket.priority
+                                                    ],
+                                                    border: `1px solid ${
+                                                        priorityColors[
+                                                            ticket.priority
+                                                        ]
+                                                    }60`,
+                                                }}
+                                                className="font-medium text-xs"
+                                            >
+                                                {ticket.priority}
+                                            </Badge>
+                                            <Badge
+                                                style={{
+                                                    backgroundColor:
+                                                        statusColors[
+                                                            ticket.status
+                                                        ] + '30',
+                                                    color: statusColors[
+                                                        ticket.status
+                                                    ],
+                                                    border: `1px solid ${
+                                                        statusColors[
+                                                            ticket.status
+                                                        ]
+                                                    }60`,
+                                                }}
+                                                className="font-medium text-xs"
+                                            >
+                                                {ticket.status.replace(
+                                                    '_',
+                                                    ' ',
+                                                )}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                            <span>{ticket.department}</span>
+                                            <span>
+                                                {formatDistanceToNow(
+                                                    ticket.createdAt,
+                                                    {
+                                                        addSuffix: true,
+                                                    },
+                                                )}
+                                            </span>
+                                        </div>
+
+                                        <div className="text-xs text-muted-foreground">
+                                            Assignee:{' '}
+                                            {ticket.assignees &&
+                                            ticket.assignees.length > 0
+                                                ? ticket.assignees[0].name
+                                                : ticket.assignee?.name ||
+                                                  'Unassigned'}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-border">
-                                        <TableHead className="text-muted-foreground font-semibold">
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm">
                                             Key
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-semibold">
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm">
                                             Title
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-semibold">
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm">
                                             Type
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-semibold">
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm">
                                             Priority
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-semibold">
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm">
                                             Status
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-semibold">
-                                            Assignee
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm hidden lg:table-cell">
+                                            Assignees
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-semibold">
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm hidden md:table-cell">
                                             Department
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-semibold">
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm hidden lg:table-cell">
                                             Created
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-semibold">
+                                        <TableHead className="text-muted-foreground font-semibold text-xs sm:text-sm">
                                             Actions
                                         </TableHead>
                                     </TableRow>
@@ -419,10 +632,10 @@ export function TicketsPage() {
                                             key={ticket.id}
                                             className="border-border hover:bg-accent/50 transition-colors"
                                         >
-                                            <TableCell className="text-foreground font-mono font-semibold">
+                                            <TableCell className="text-foreground font-mono font-semibold text-xs sm:text-sm">
                                                 {ticket.key}
                                             </TableCell>
-                                            <TableCell className="text-foreground max-w-xs truncate font-medium">
+                                            <TableCell className="text-foreground max-w-xs truncate font-medium text-xs sm:text-sm">
                                                 {ticket.title}
                                             </TableCell>
                                             <TableCell>
@@ -441,7 +654,7 @@ export function TicketsPage() {
                                                             ]
                                                         }60`,
                                                     }}
-                                                    className="font-medium"
+                                                    className="font-medium text-xs"
                                                 >
                                                     {ticket.type}
                                                 </Badge>
@@ -462,7 +675,7 @@ export function TicketsPage() {
                                                             ]
                                                         }60`,
                                                     }}
-                                                    className="font-medium"
+                                                    className="font-medium text-xs"
                                                 >
                                                     {ticket.priority}
                                                 </Badge>
@@ -483,7 +696,7 @@ export function TicketsPage() {
                                                             ]
                                                         }60`,
                                                     }}
-                                                    className="font-medium"
+                                                    className="font-medium text-xs"
                                                 >
                                                     {ticket.status.replace(
                                                         '_',
@@ -491,21 +704,69 @@ export function TicketsPage() {
                                                     )}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground font-medium">
-                                                {ticket.assignee?.name ||
-                                                    'Unassigned'}
+                                            <TableCell className="text-muted-foreground font-medium text-xs sm:text-sm hidden lg:table-cell">
+                                                {ticket.assignees &&
+                                                ticket.assignees.length > 0 ? (
+                                                    <div className="flex items-center space-x-1">
+                                                        {ticket.assignees
+                                                            .slice(0, 2)
+                                                            .map(
+                                                                (
+                                                                    assignee,
+                                                                    index,
+                                                                ) => (
+                                                                    <span
+                                                                        key={
+                                                                            assignee.id
+                                                                        }
+                                                                        className="text-xs"
+                                                                    >
+                                                                        {
+                                                                            assignee.name.split(
+                                                                                ' ',
+                                                                            )[0]
+                                                                        }
+                                                                        {index <
+                                                                        Math.min(
+                                                                            ticket.assignees!
+                                                                                .length -
+                                                                                1,
+                                                                            1,
+                                                                        )
+                                                                            ? ','
+                                                                            : ''}
+                                                                    </span>
+                                                                ),
+                                                            )}
+                                                        {ticket.assignees
+                                                            .length > 2 && (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                +
+                                                                {ticket
+                                                                    .assignees
+                                                                    .length -
+                                                                    2}{' '}
+                                                                more
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : ticket.assignee?.name ? (
+                                                    ticket.assignee.name
+                                                ) : (
+                                                    'Unassigned'
+                                                )}
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground font-medium">
+                                            <TableCell className="text-muted-foreground font-medium text-xs sm:text-sm hidden md:table-cell">
                                                 {ticket.department}
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground font-medium">
+                                            <TableCell className="text-muted-foreground font-medium text-xs sm:text-sm hidden lg:table-cell">
                                                 {formatDistanceToNow(
                                                     ticket.createdAt,
                                                     { addSuffix: true },
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center space-x-2">
+                                                <div className="flex items-center space-x-1 sm:space-x-2">
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
@@ -514,9 +775,9 @@ export function TicketsPage() {
                                                                 ticket,
                                                             )
                                                         }
-                                                        className="text-primary hover:bg-primary/10"
+                                                        className="text-primary hover:bg-primary/10 p-1 sm:p-2"
                                                     >
-                                                        <Eye className="w-4 h-4" />
+                                                        <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                                                     </Button>
                                                     {hasPermission(
                                                         'tickets',
@@ -530,9 +791,9 @@ export function TicketsPage() {
                                                                         ticket,
                                                                     )
                                                                 }
-                                                                className="text-yellow-500 hover:bg-yellow-500/10"
+                                                                className="text-yellow-500 hover:bg-yellow-500/10 p-1 sm:p-2 hidden sm:flex"
                                                             >
-                                                                <Edit className="w-4 h-4" />
+                                                                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                                             </Button>
                                                             <Button
                                                                 size="sm"
@@ -542,9 +803,9 @@ export function TicketsPage() {
                                                                         ticket,
                                                                     )
                                                                 }
-                                                                className="text-destructive hover:bg-destructive/10"
+                                                                className="text-destructive hover:bg-destructive/10 p-1 sm:p-2 hidden sm:flex"
                                                             >
-                                                                <Trash2 className="w-4 h-4" />
+                                                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                                                             </Button>
                                                         </>
                                                     )}

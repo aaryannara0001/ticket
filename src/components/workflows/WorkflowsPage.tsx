@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -178,50 +179,42 @@ export function WorkflowsPage() {
         hasPermission('*') || hasPermission('team_management');
 
     return (
-        <div className="space-y-6">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between"
-            >
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground">
-                        Workflow Automation
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Automate ticket workflows with custom rules and actions
-                    </p>
-                </div>
-                {canManageWorkflows && (
-                    <Button
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Rule
-                    </Button>
-                )}
-            </motion.div>
+        <div className="space-y-4">
+            <PageHeader
+                title="Workflows"
+                actions={
+                    canManageWorkflows ? (
+                        <Button
+                            onClick={() => setShowCreateModal(true)}
+                            size="sm"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Rule
+                        </Button>
+                    ) : undefined
+                }
+            />
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Stats Cards - Responsive Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                 >
                     <Card className="bg-card border-border">
-                        <CardContent className="p-6">
+                        <CardContent className="p-3 sm:p-4 md:p-6">
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-muted-foreground text-sm font-medium">
+                                <div className="min-w-0">
+                                    <p className="text-muted-foreground text-xs sm:text-sm font-medium">
                                         Total Rules
                                     </p>
-                                    <p className="text-2xl font-bold text-foreground mt-2">
+                                    <p className="text-xl sm:text-2xl font-bold text-foreground mt-1 sm:mt-2">
                                         {rules.length}
                                     </p>
                                 </div>
-                                <Zap className="w-8 h-8 text-primary" />
+                                <Zap className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary flex-shrink-0" />
                             </div>
                         </CardContent>
                     </Card>
@@ -233,17 +226,17 @@ export function WorkflowsPage() {
                     transition={{ delay: 0.2 }}
                 >
                     <Card className="bg-card border-border">
-                        <CardContent className="p-6">
+                        <CardContent className="p-3 sm:p-4 md:p-6">
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-muted-foreground text-sm font-medium">
+                                <div className="min-w-0">
+                                    <p className="text-muted-foreground text-xs sm:text-sm font-medium">
                                         Active Rules
                                     </p>
-                                    <p className="text-2xl font-bold text-foreground mt-2">
+                                    <p className="text-xl sm:text-2xl font-bold text-foreground mt-1 sm:mt-2">
                                         {rules.filter((r) => r.active).length}
                                     </p>
                                 </div>
-                                <Play className="w-8 h-8 text-yellow-500" />
+                                <Play className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-yellow-500 flex-shrink-0" />
                             </div>
                         </CardContent>
                     </Card>
@@ -281,13 +274,13 @@ export function WorkflowsPage() {
                     transition={{ delay: 0.4 }}
                 >
                     <Card className="bg-card border-border">
-                        <CardContent className="p-6">
+                        <CardContent className="p-3 sm:p-4 md:p-6">
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-muted-foreground text-sm font-medium">
+                                <div className="min-w-0">
+                                    <p className="text-muted-foreground text-xs sm:text-sm font-medium">
                                         Avg. Executions
                                     </p>
-                                    <p className="text-2xl font-bold text-foreground mt-2">
+                                    <p className="text-xl sm:text-2xl font-bold text-foreground mt-1 sm:mt-2">
                                         {Math.round(
                                             rules.reduce(
                                                 (sum, rule) =>
@@ -297,7 +290,7 @@ export function WorkflowsPage() {
                                         )}
                                     </p>
                                 </div>
-                                <Filter className="w-8 h-8 text-orange-500" />
+                                <Filter className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-orange-500 flex-shrink-0" />
                             </div>
                         </CardContent>
                     </Card>
@@ -311,77 +304,38 @@ export function WorkflowsPage() {
                 transition={{ delay: 0.5 }}
             >
                 <Card className="bg-card border-border">
-                    <CardHeader>
-                        <CardTitle className="text-foreground">
+                    <CardHeader className="pb-3 sm:pb-4">
+                        <CardTitle className="text-foreground text-base sm:text-lg">
                             Workflow Rules
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="border-border">
-                                    <TableHead className="text-muted-foreground">
-                                        Name
-                                    </TableHead>
-                                    <TableHead className="text-muted-foreground">
-                                        Trigger
-                                    </TableHead>
-                                    <TableHead className="text-muted-foreground">
-                                        Conditions
-                                    </TableHead>
-                                    <TableHead className="text-muted-foreground">
-                                        Actions
-                                    </TableHead>
-                                    <TableHead className="text-muted-foreground">
-                                        Executions
-                                    </TableHead>
-                                    <TableHead className="text-muted-foreground">
-                                        Status
-                                    </TableHead>
-                                    <TableHead className="text-muted-foreground">
-                                        Actions
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
+                    <CardContent className="p-0 sm:p-6">
+                        {/* Mobile Card View */}
+                        <div className="block sm:hidden">
+                            <div className="space-y-3 p-3">
                                 {rules.map((rule) => (
-                                    <TableRow
+                                    <div
                                         key={rule.id}
-                                        className="border-border"
+                                        className="bg-accent/20 border border-border rounded-lg p-4 space-y-3"
                                     >
-                                        <TableCell className="text-foreground font-medium">
-                                            {rule.name}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                className={getTriggerBadgeColor(
-                                                    rule.trigger,
-                                                )}
-                                            >
-                                                {rule.trigger
-                                                    .replace('.', ' ')
-                                                    .replace(/\b\w/g, (l) =>
-                                                        l.toUpperCase(),
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1 min-w-0 flex-1">
+                                                <div className="font-medium text-foreground">
+                                                    {rule.name}
+                                                </div>
+                                                <Badge
+                                                    className={getTriggerBadgeColor(
+                                                        rule.trigger,
                                                     )}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {rule.conditions.length} condition
-                                            {rule.conditions.length !== 1
-                                                ? 's'
-                                                : ''}
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {rule.actions.length} action
-                                            {rule.actions.length !== 1
-                                                ? 's'
-                                                : ''}
-                                        </TableCell>
-                                        <TableCell className="text-foreground">
-                                            {rule.executions}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center space-x-2">
+                                                >
+                                                    {rule.trigger
+                                                        .replace('.', ' ')
+                                                        .replace(/\b\w/g, (l) =>
+                                                            l.toUpperCase(),
+                                                        )}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center space-x-2 ml-2">
                                                 <Switch
                                                     checked={rule.active}
                                                     onCheckedChange={() =>
@@ -391,30 +345,12 @@ export function WorkflowsPage() {
                                                         !canManageWorkflows
                                                     }
                                                 />
-                                                <span
-                                                    className={`text-sm ${
-                                                        rule.active
-                                                            ? 'text-primary'
-                                                            : 'text-muted-foreground'
-                                                    }`}
-                                                >
-                                                    {rule.active
-                                                        ? 'Active'
-                                                        : 'Inactive'}
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center space-x-2">
                                                 {canManageWorkflows && (
-                                                    <>
+                                                    <div className="flex space-x-1">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => {
-                                                                /* Edit functionality */
-                                                            }}
-                                                            className="text-primary hover:bg-primary/10"
+                                                            className="text-primary hover:bg-primary/10 p-1"
                                                         >
                                                             <Edit className="w-4 h-4" />
                                                         </Button>
@@ -426,25 +362,185 @@ export function WorkflowsPage() {
                                                                     rule.id,
                                                                 )
                                                             }
-                                                            className="text-destructive hover:bg-destructive/10"
+                                                            className="text-destructive hover:bg-destructive/10 p-1"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </Button>
-                                                    </>
+                                                    </div>
                                                 )}
                                             </div>
-                                        </TableCell>
-                                    </TableRow>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                                            <div>
+                                                <span className="font-medium">
+                                                    Conditions:
+                                                </span>{' '}
+                                                {rule.conditions.length}
+                                            </div>
+                                            <div>
+                                                <span className="font-medium">
+                                                    Actions:
+                                                </span>{' '}
+                                                {rule.actions.length}
+                                            </div>
+                                            <div>
+                                                <span className="font-medium">
+                                                    Executions:
+                                                </span>{' '}
+                                                {rule.executions}
+                                            </div>
+                                            <div>
+                                                <span
+                                                    className={`font-medium ${
+                                                        rule.active
+                                                            ? 'text-primary'
+                                                            : 'text-muted-foreground'
+                                                    }`}
+                                                >
+                                                    {rule.active
+                                                        ? 'Active'
+                                                        : 'Inactive'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))}
-                            </TableBody>
-                        </Table>
+                            </div>
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden sm:block overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="border-border">
+                                        <TableHead className="text-muted-foreground">
+                                            Name
+                                        </TableHead>
+                                        <TableHead className="text-muted-foreground">
+                                            Trigger
+                                        </TableHead>
+                                        <TableHead className="text-muted-foreground">
+                                            Conditions
+                                        </TableHead>
+                                        <TableHead className="text-muted-foreground">
+                                            Actions
+                                        </TableHead>
+                                        <TableHead className="text-muted-foreground">
+                                            Executions
+                                        </TableHead>
+                                        <TableHead className="text-muted-foreground">
+                                            Status
+                                        </TableHead>
+                                        <TableHead className="text-muted-foreground">
+                                            Actions
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {rules.map((rule) => (
+                                        <TableRow
+                                            key={rule.id}
+                                            className="border-border"
+                                        >
+                                            <TableCell className="text-foreground font-medium">
+                                                {rule.name}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    className={getTriggerBadgeColor(
+                                                        rule.trigger,
+                                                    )}
+                                                >
+                                                    {rule.trigger
+                                                        .replace('.', ' ')
+                                                        .replace(/\b\w/g, (l) =>
+                                                            l.toUpperCase(),
+                                                        )}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {rule.conditions.length}{' '}
+                                                condition
+                                                {rule.conditions.length !== 1
+                                                    ? 's'
+                                                    : ''}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {rule.actions.length} action
+                                                {rule.actions.length !== 1
+                                                    ? 's'
+                                                    : ''}
+                                            </TableCell>
+                                            <TableCell className="text-foreground">
+                                                {rule.executions}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center space-x-2">
+                                                    <Switch
+                                                        checked={rule.active}
+                                                        onCheckedChange={() =>
+                                                            toggleRule(rule.id)
+                                                        }
+                                                        disabled={
+                                                            !canManageWorkflows
+                                                        }
+                                                    />
+                                                    <span
+                                                        className={`text-sm ${
+                                                            rule.active
+                                                                ? 'text-primary'
+                                                                : 'text-muted-foreground'
+                                                        }`}
+                                                    >
+                                                        {rule.active
+                                                            ? 'Active'
+                                                            : 'Inactive'}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center space-x-2">
+                                                    {canManageWorkflows && (
+                                                        <>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    /* Edit functionality */
+                                                                }}
+                                                                className="text-primary hover:bg-primary/10"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    deleteRule(
+                                                                        rule.id,
+                                                                    )
+                                                                }
+                                                                className="text-destructive hover:bg-destructive/10"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
             </motion.div>
 
             {/* Create Rule Modal */}
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-                <DialogContent className="bg-popover border-border text-popover-foreground max-w-4xl">
+                <DialogContent className="bg-popover border-border text-popover-foreground w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Create Workflow Rule</DialogTitle>
                     </DialogHeader>

@@ -8,6 +8,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { MultiSelect } from '@/components/ui/multi-select';
 import {
     Select,
     SelectContent,
@@ -20,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store/authStore';
 import { useTicketStore } from '@/store/ticketStore';
-import { Ticket } from '@/types';
+import { Ticket, User as UserType } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
@@ -30,8 +31,9 @@ import {
     MessageSquare,
     Paperclip,
     Send,
+    User,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface TicketDetailModalProps {
     ticket: Ticket;
@@ -53,36 +55,33 @@ const statusColors = {
     closed: '#A1A1AA',
 };
 
-const mockUsers = [
-    { id: '1', name: 'John Admin', department: 'IT', role: 'admin' },
-    {
-        id: '2',
-        name: 'Sarah Manager',
-        department: 'Engineering',
-        role: 'manager',
-    },
-    {
-        id: '3',
-        name: 'Mike Developer',
-        department: 'Engineering',
-        role: 'team_member',
-    },
-    { id: '4', name: 'Lisa Client', department: 'External', role: 'client' },
-];
+// use live users from auth store so assignee lists update in real-time
 
 export function TicketDetailModal({
     ticket,
     open,
     onOpenChange,
 }: TicketDetailModalProps) {
+    const [users, setUsers] = useState<UserType[]>(() =>
+        useAuthStore.getState().getUsers(),
+    );
     const [newComment, setNewComment] = useState('');
     const [editingStatus, setEditingStatus] = useState(false);
     const [newStatus, setNewStatus] = useState(ticket.status);
-    const [editingAssignee, setEditingAssignee] = useState(false);
-    const [newAssigneeId, setNewAssigneeId] = useState(ticket.assigneeId || '');
+    const [editingAssignees, setEditingAssignees] = useState(false);
+    const [newAssigneeIds, setNewAssigneeIds] = useState(
+        ticket.assigneeIds || [],
+    );
 
     const { updateTicket, addComment } = useTicketStore();
     const { user, hasPermission } = useAuthStore();
+
+    useEffect(() => {
+        const unsub = useAuthStore.subscribe(() => {
+            setUsers(useAuthStore.getState().getUsers());
+        });
+        return unsub;
+    }, []);
 
     const handleStatusUpdate = async () => {
         if (newStatus !== ticket.status) {
@@ -98,13 +97,19 @@ export function TicketDetailModal({
         setNewComment('');
     };
 
-    const handleAssigneeUpdate = async () => {
-        if (newAssigneeId !== ticket.assigneeId) {
+    const handleAssigneesUpdate = async () => {
+        const currentIds = ticket.assigneeIds || [];
+        const hasChanged =
+            newAssigneeIds.length !== currentIds.length ||
+            !newAssigneeIds.every((id) => currentIds.includes(id));
+
+        if (hasChanged) {
             await updateTicket(ticket.id, {
-                assigneeId: newAssigneeId || undefined,
+                assigneeIds:
+                    newAssigneeIds.length > 0 ? newAssigneeIds : undefined,
             });
         }
-        setEditingAssignee(false);
+        setEditingAssignees(false);
     };
 
     const canAssign =
@@ -275,120 +280,143 @@ export function TicketDetailModal({
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <Label className="text-muted-foreground text-sm">
-                                                Assignee
+                                                Assignees
                                             </Label>
-                                            {editingAssignee ? (
-                                                <div className="mt-2 flex items-center space-x-2">
-                                                    <Select
-                                                        value={newAssigneeId}
-                                                        onValueChange={
-                                                            setNewAssigneeId
-                                                        }
-                                                    >
-                                                        <SelectTrigger className="w-48 h-8 bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground">
-                                                            <SelectValue
-                                                                placeholder="Select assignee"
-                                                                className="text-foreground"
-                                                            />
-                                                        </SelectTrigger>
-                                                        <SelectContent className="bg-popover border-border">
-                                                            <SelectItem
-                                                                value=""
-                                                                className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                                            >
-                                                                Unassigned
-                                                            </SelectItem>
-                                                            {mockUsers
-                                                                .filter(
-                                                                    (u) =>
-                                                                        u.role !==
-                                                                        'client',
-                                                                )
-                                                                .map((user) => (
-                                                                    <SelectItem
-                                                                        key={
-                                                                            user.id
-                                                                        }
-                                                                        value={
-                                                                            user.id
-                                                                        }
-                                                                        className="text-popover-foreground hover:bg-accent focus:bg-accent"
-                                                                    >
-                                                                        {
-                                                                            user.name
-                                                                        }{' '}
-                                                                        (
-                                                                        {
-                                                                            user.department
-                                                                        }
-                                                                        )
-                                                                    </SelectItem>
-                                                                ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={
-                                                            handleAssigneeUpdate
-                                                        }
-                                                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                                                    >
-                                                        Save
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() =>
-                                                            setEditingAssignee(
-                                                                false,
+                                            {editingAssignees ? (
+                                                <div className="mt-2 space-y-3">
+                                                    <MultiSelect
+                                                        options={users
+                                                            .filter(
+                                                                (u) =>
+                                                                    u.role !==
+                                                                    'client',
                                                             )
+                                                            .map((user) => ({
+                                                                label: `${
+                                                                    user.name
+                                                                } (${
+                                                                    user.department ||
+                                                                    'Unknown'
+                                                                })`,
+                                                                value: user.id,
+                                                                icon: User,
+                                                            }))}
+                                                        selected={
+                                                            newAssigneeIds
                                                         }
-                                                        className="text-foreground"
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <div className="mt-2 flex items-center space-x-2">
-                                                    <Avatar className="w-6 h-6">
-                                                        <AvatarImage
-                                                            src={
-                                                                ticket.assignee
-                                                                    ?.avatar
+                                                        onChange={
+                                                            setNewAssigneeIds
+                                                        }
+                                                        placeholder="Select assignees"
+                                                        className="w-full"
+                                                        maxCount={2}
+                                                    />
+                                                    <div className="flex items-center space-x-2">
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={
+                                                                handleAssigneesUpdate
                                                             }
-                                                        />
-                                                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                                                            {ticket.assignee?.name?.charAt(
-                                                                0,
-                                                            ) || 'U'}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-foreground text-sm">
-                                                        {ticket.assignee
-                                                            ?.name ||
-                                                            'Unassigned'}
-                                                    </span>
-                                                    {canAssign && (
+                                                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                                                        >
+                                                            Save
+                                                        </Button>
                                                         <Button
                                                             size="sm"
                                                             variant="ghost"
                                                             onClick={() => {
-                                                                console.log(
-                                                                    'Edit assignee clicked',
+                                                                setEditingAssignees(
+                                                                    false,
                                                                 );
-                                                                setEditingAssignee(
-                                                                    true,
-                                                                );
-                                                                setNewAssigneeId(
-                                                                    ticket.assigneeId ||
-                                                                        '',
+                                                                setNewAssigneeIds(
+                                                                    ticket.assigneeIds ||
+                                                                        [],
                                                                 );
                                                             }}
-                                                            className="text-primary hover:bg-primary/10 h-8 w-8 p-0 border border-primary/20"
-                                                            title="Edit assignee"
+                                                            className="text-foreground"
                                                         >
-                                                            <Edit className="w-4 h-4" />
+                                                            Cancel
                                                         </Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="mt-2">
+                                                    {ticket.assignees &&
+                                                    ticket.assignees.length >
+                                                        0 ? (
+                                                        <div className="flex flex-wrap gap-2 items-center">
+                                                            {ticket.assignees.map(
+                                                                (assignee) => (
+                                                                    <div
+                                                                        key={
+                                                                            assignee.id
+                                                                        }
+                                                                        className="flex items-center space-x-2 bg-card rounded-md px-2 py-1 border"
+                                                                    >
+                                                                        <Avatar className="w-5 h-5">
+                                                                            <AvatarImage
+                                                                                src={
+                                                                                    assignee.avatar
+                                                                                }
+                                                                            />
+                                                                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                                                                                {assignee.name.charAt(
+                                                                                    0,
+                                                                                )}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
+                                                                        <span className="text-foreground text-xs">
+                                                                            {
+                                                                                assignee.name
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                ),
+                                                            )}
+                                                            {canAssign && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    onClick={() => {
+                                                                        setEditingAssignees(
+                                                                            true,
+                                                                        );
+                                                                        setNewAssigneeIds(
+                                                                            ticket.assigneeIds ||
+                                                                                [],
+                                                                        );
+                                                                    }}
+                                                                    className="text-primary hover:bg-primary/10 h-7 w-7 p-0 border border-primary/20"
+                                                                    title="Edit assignees"
+                                                                >
+                                                                    <Edit className="w-3 h-3" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-muted-foreground text-sm">
+                                                                Unassigned
+                                                            </span>
+                                                            {canAssign && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    onClick={() => {
+                                                                        setEditingAssignees(
+                                                                            true,
+                                                                        );
+                                                                        setNewAssigneeIds(
+                                                                            [],
+                                                                        );
+                                                                    }}
+                                                                    className="text-primary hover:bg-primary/10 h-7 w-7 p-0 border border-primary/20"
+                                                                    title="Assign users"
+                                                                >
+                                                                    <Edit className="w-3 h-3" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </div>
                                             )}
@@ -542,7 +570,7 @@ export function TicketDetailModal({
                                         setNewComment(e.target.value)
                                     }
                                     placeholder="Add a comment..."
-                                    className="bg-background border-border text-foreground focus:border-primary min-h-[100px]"
+                                    className="bg-background border-border text-foreground focus:border-primary sm:min-h-[100px]"
                                 />
                                 <div className="flex justify-end">
                                     <Button

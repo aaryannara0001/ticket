@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,12 +56,16 @@ export function KanbanPage() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
-    const { tickets, fetchTickets, updateTicket, loading } = useTicketStore();
+    // fetchTickets removed from destructure because we call it via the store getter on mount
+    const { tickets, updateTicket, loading } = useTicketStore();
     const { hasPermission } = useAuthStore();
 
     useEffect(() => {
-        fetchTickets();
-    }, [fetchTickets]);
+        // Call fetchTickets once on mount using the store getter to avoid
+        // subscribing to the function reference which may change and retrigger
+        // the effect (causes re-render loops).
+        useTicketStore.getState().fetchTickets();
+    }, []);
 
     const filteredTickets = tickets.filter((ticket) => {
         const matchesSearch =
@@ -128,29 +133,21 @@ export function KanbanPage() {
 
     return (
         <div className="space-y-6">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between"
-            >
-                <div>
-                    <h1 className="text-4xl font-bold text-foreground tracking-tight">
-                        Kanban Board
-                    </h1>
-                    <p className="text-muted-foreground mt-2 text-lg font-medium">
-                        Drag and drop tickets to update their status
-                    </p>
-                </div>
-                {hasPermission('create_ticket') && (
-                    <Button
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Ticket
-                    </Button>
-                )}
-            </motion.div>
+            <PageHeader
+                title="Kanban"
+                actions={
+                    hasPermission('create_ticket') ? (
+                        <Button
+                            onClick={() => setShowCreateModal(true)}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            size="sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Ticket
+                        </Button>
+                    ) : undefined
+                }
+            />
 
             {/* Filters */}
             <motion.div
@@ -297,7 +294,7 @@ export function KanbanPage() {
                                         <div
                                             ref={provided.innerRef}
                                             {...provided.droppableProps}
-                                            className={`min-h-[500px] p-4 rounded-lg border-2 border-dashed transition-colors ${
+                                            className={`min-h-[300px] sm:min-h-[500px] p-4 rounded-lg border-2 border-dashed transition-colors ${
                                                 snapshot.isDraggingOver
                                                     ? 'border-primary bg-primary/10'
                                                     : 'border-border'
@@ -316,158 +313,161 @@ export function KanbanPage() {
                                                             provided,
                                                             snapshot,
                                                         ) => (
-                                                            <motion.div
+                                                            <div
                                                                 ref={
                                                                     provided.innerRef
                                                                 }
                                                                 {...provided.draggableProps}
                                                                 {...provided.dragHandleProps}
-                                                                initial={{
-                                                                    opacity: 0,
-                                                                    scale: 0.9,
-                                                                }}
-                                                                animate={{
-                                                                    opacity: 1,
-                                                                    scale: 1,
-                                                                }}
-                                                                whileHover={{
-                                                                    scale: 1.02,
-                                                                }}
-                                                                className={`cursor-pointer transition-all ${
-                                                                    snapshot.isDragging
-                                                                        ? 'rotate-3 shadow-2xl'
-                                                                        : ''
-                                                                }`}
-                                                                onClick={() =>
-                                                                    handleTicketClick(
-                                                                        ticket,
-                                                                    )
-                                                                }
                                                             >
-                                                                <Card className="bg-card border-border hover:border-primary/60 shadow-lg hover:shadow-xl transition-all">
-                                                                    <CardContent className="p-4">
-                                                                        <div className="space-y-3">
-                                                                            <div className="flex items-start justify-between">
-                                                                                <span className="text-primary text-sm font-mono font-bold">
-                                                                                    {
-                                                                                        ticket.key
-                                                                                    }
-                                                                                </span>
-                                                                                <Badge
-                                                                                    style={{
-                                                                                        backgroundColor:
-                                                                                            priorityColors[
-                                                                                                ticket
-                                                                                                    .priority
-                                                                                            ] +
-                                                                                            '30',
-                                                                                        color: priorityColors[
-                                                                                            ticket
-                                                                                                .priority
-                                                                                        ],
-                                                                                        border: `1px solid ${
-                                                                                            priorityColors[
-                                                                                                ticket
-                                                                                                    .priority
-                                                                                            ]
-                                                                                        }60`,
-                                                                                    }}
-                                                                                    className="text-xs font-medium"
-                                                                                >
-                                                                                    {
-                                                                                        ticket.priority
-                                                                                    }
-                                                                                </Badge>
-                                                                            </div>
-
-                                                                            <h4 className="text-foreground font-semibold text-sm line-clamp-2 leading-relaxed">
-                                                                                {
-                                                                                    ticket.title
-                                                                                }
-                                                                            </h4>
-
-                                                                            <div className="flex items-center justify-between">
-                                                                                <Badge
-                                                                                    style={{
-                                                                                        backgroundColor:
-                                                                                            typeColors[
-                                                                                                ticket
-                                                                                                    .type
-                                                                                            ] +
-                                                                                            '30',
-                                                                                        color: typeColors[
-                                                                                            ticket
-                                                                                                .type
-                                                                                        ],
-                                                                                        border: `1px solid ${
-                                                                                            typeColors[
-                                                                                                ticket
-                                                                                                    .type
-                                                                                            ]
-                                                                                        }60`,
-                                                                                    }}
-                                                                                    className="text-xs font-medium"
-                                                                                >
-                                                                                    {
-                                                                                        ticket.type
-                                                                                    }
-                                                                                </Badge>
-
-                                                                                {ticket.assignee && (
-                                                                                    <Avatar className="w-6 h-6">
-                                                                                        <AvatarImage
-                                                                                            src={
-                                                                                                ticket
-                                                                                                    .assignee
-                                                                                                    .avatar
-                                                                                            }
-                                                                                        />
-                                                                                        <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-                                                                                            {ticket.assignee.name.charAt(
-                                                                                                0,
-                                                                                            )}
-                                                                                        </AvatarFallback>
-                                                                                    </Avatar>
-                                                                                )}
-                                                                            </div>
-
-                                                                            {ticket.dueDate && (
-                                                                                <div className="flex items-center text-muted-foreground text-xs font-medium">
-                                                                                    <Calendar className="w-3 h-3 mr-1" />
-                                                                                    Due{' '}
-                                                                                    {formatDistanceToNow(
-                                                                                        ticket.dueDate,
+                                                                <motion.div
+                                                                    initial={{
+                                                                        opacity: 0,
+                                                                        scale: 0.9,
+                                                                    }}
+                                                                    animate={{
+                                                                        opacity: 1,
+                                                                        scale: 1,
+                                                                    }}
+                                                                    whileHover={{
+                                                                        scale: 1.02,
+                                                                    }}
+                                                                    className={`cursor-pointer transition-all ${
+                                                                        snapshot.isDragging
+                                                                            ? 'rotate-3 shadow-2xl'
+                                                                            : ''
+                                                                    }`}
+                                                                    onClick={() =>
+                                                                        handleTicketClick(
+                                                                            ticket,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Card className="bg-card border-border hover:border-primary/60 shadow-lg hover:shadow-xl transition-all">
+                                                                        <CardContent className="p-4">
+                                                                            <div className="space-y-3">
+                                                                                <div className="flex items-start justify-between">
+                                                                                    <span className="text-primary text-sm font-mono font-bold">
                                                                                         {
-                                                                                            addSuffix:
-                                                                                                true,
-                                                                                        },
+                                                                                            ticket.key
+                                                                                        }
+                                                                                    </span>
+                                                                                    <Badge
+                                                                                        style={{
+                                                                                            backgroundColor:
+                                                                                                priorityColors[
+                                                                                                    ticket
+                                                                                                        .priority
+                                                                                                ] +
+                                                                                                '30',
+                                                                                            color: priorityColors[
+                                                                                                ticket
+                                                                                                    .priority
+                                                                                            ],
+                                                                                            border: `1px solid ${
+                                                                                                priorityColors[
+                                                                                                    ticket
+                                                                                                        .priority
+                                                                                                ]
+                                                                                            }60`,
+                                                                                        }}
+                                                                                        className="text-xs font-medium"
+                                                                                    >
+                                                                                        {
+                                                                                            ticket.priority
+                                                                                        }
+                                                                                    </Badge>
+                                                                                </div>
+
+                                                                                <h4 className="text-foreground font-semibold text-sm line-clamp-2 leading-relaxed">
+                                                                                    {
+                                                                                        ticket.title
+                                                                                    }
+                                                                                </h4>
+
+                                                                                <div className="flex items-center justify-between">
+                                                                                    <Badge
+                                                                                        style={{
+                                                                                            backgroundColor:
+                                                                                                typeColors[
+                                                                                                    ticket
+                                                                                                        .type
+                                                                                                ] +
+                                                                                                '30',
+                                                                                            color: typeColors[
+                                                                                                ticket
+                                                                                                    .type
+                                                                                            ],
+                                                                                            border: `1px solid ${
+                                                                                                typeColors[
+                                                                                                    ticket
+                                                                                                        .type
+                                                                                                ]
+                                                                                            }60`,
+                                                                                        }}
+                                                                                        className="text-xs font-medium"
+                                                                                    >
+                                                                                        {
+                                                                                            ticket.type
+                                                                                        }
+                                                                                    </Badge>
+
+                                                                                    {ticket.assignee && (
+                                                                                        <Avatar className="w-6 h-6">
+                                                                                            <AvatarImage
+                                                                                                src={
+                                                                                                    ticket
+                                                                                                        .assignee
+                                                                                                        .avatar
+                                                                                                }
+                                                                                            />
+                                                                                            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                                                                                                {ticket.assignee.name.charAt(
+                                                                                                    0,
+                                                                                                )}
+                                                                                            </AvatarFallback>
+                                                                                        </Avatar>
                                                                                     )}
                                                                                 </div>
-                                                                            )}
 
-                                                                            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-                                                                                <span>
-                                                                                    {
-                                                                                        ticket
-                                                                                            .comments
-                                                                                            .length
-                                                                                    }{' '}
-                                                                                    comments
-                                                                                </span>
-                                                                                <span>
-                                                                                    {formatDistanceToNow(
-                                                                                        ticket.updatedAt,
+                                                                                {ticket.dueDate && (
+                                                                                    <div className="flex items-center text-muted-foreground text-xs font-medium">
+                                                                                        <Calendar className="w-3 h-3 mr-1" />
+                                                                                        Due{' '}
+                                                                                        {formatDistanceToNow(
+                                                                                            ticket.dueDate,
+                                                                                            {
+                                                                                                addSuffix:
+                                                                                                    true,
+                                                                                            },
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+
+                                                                                <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                                                                                    <span>
                                                                                         {
-                                                                                            addSuffix:
-                                                                                                true,
-                                                                                        },
-                                                                                    )}
-                                                                                </span>
+                                                                                            ticket
+                                                                                                .comments
+                                                                                                .length
+                                                                                        }{' '}
+                                                                                        comments
+                                                                                    </span>
+                                                                                    <span>
+                                                                                        {formatDistanceToNow(
+                                                                                            ticket.updatedAt,
+                                                                                            {
+                                                                                                addSuffix:
+                                                                                                    true,
+                                                                                            },
+                                                                                        )}
+                                                                                    </span>
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    </CardContent>
-                                                                </Card>
-                                                            </motion.div>
+                                                                        </CardContent>
+                                                                    </Card>
+                                                                </motion.div>
+                                                            </div>
                                                         )}
                                                     </Draggable>
                                                 ))}

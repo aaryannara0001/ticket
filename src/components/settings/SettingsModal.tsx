@@ -17,7 +17,8 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface SettingsModalProps {
     children: React.ReactNode;
@@ -25,11 +26,51 @@ interface SettingsModalProps {
 
 export function SettingsModal({ children }: SettingsModalProps) {
     const { theme, setTheme } = useTheme();
-    const [notifications, setNotifications] = useState(true);
-    const [emailUpdates, setEmailUpdates] = useState(true);
+    const [tempTheme, setTempTheme] = useState(theme);
+    const [tempNotifications, setTempNotifications] = useState(true);
+    const [tempEmailUpdates, setTempEmailUpdates] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Load current settings when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setTempTheme(theme);
+            // Load notification settings from localStorage or API
+            const savedNotifications =
+                localStorage.getItem('pushNotifications');
+            const savedEmailUpdates = localStorage.getItem('emailUpdates');
+            setTempNotifications(savedNotifications !== 'false');
+            setTempEmailUpdates(savedEmailUpdates !== 'false');
+        }
+    }, [isOpen, theme]);
+
+    const handleSaveSettings = () => {
+        // Apply theme change
+        setTheme(tempTheme);
+
+        // Save notification settings to localStorage
+        localStorage.setItem('pushNotifications', tempNotifications.toString());
+        localStorage.setItem('emailUpdates', tempEmailUpdates.toString());
+
+        // Show success message
+        toast.success('Settings saved successfully!');
+
+        // Close modal
+        setIsOpen(false);
+    };
+
+    const handleCancel = () => {
+        // Reset temporary settings to current values
+        setTempTheme(theme);
+        const savedNotifications = localStorage.getItem('pushNotifications');
+        const savedEmailUpdates = localStorage.getItem('emailUpdates');
+        setTempNotifications(savedNotifications !== 'false');
+        setTempEmailUpdates(savedEmailUpdates !== 'false');
+        setIsOpen(false);
+    };
 
     return (
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -41,7 +82,10 @@ export function SettingsModal({ children }: SettingsModalProps) {
                         <h3 className="text-lg font-medium">Appearance</h3>
                         <div className="space-y-3">
                             <Label className="text-sm font-medium">Theme</Label>
-                            <Select value={theme} onValueChange={setTheme}>
+                            <Select
+                                value={tempTheme || 'system'}
+                                onValueChange={setTempTheme}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select theme" />
                                 </SelectTrigger>
@@ -83,8 +127,8 @@ export function SettingsModal({ children }: SettingsModalProps) {
                                     </p>
                                 </div>
                                 <Switch
-                                    checked={notifications}
-                                    onCheckedChange={setNotifications}
+                                    checked={tempNotifications}
+                                    onCheckedChange={setTempNotifications}
                                 />
                             </div>
                             <div className="flex items-center justify-between">
@@ -98,16 +142,21 @@ export function SettingsModal({ children }: SettingsModalProps) {
                                     </p>
                                 </div>
                                 <Switch
-                                    checked={emailUpdates}
-                                    onCheckedChange={setEmailUpdates}
+                                    checked={tempEmailUpdates}
+                                    onCheckedChange={setTempEmailUpdates}
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* Save Button */}
-                    <div className="flex justify-end">
-                        <Button>Save Settings</Button>
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-2">
+                        <Button variant="outline" onClick={handleCancel}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveSettings}>
+                            Save Settings
+                        </Button>
                     </div>
                 </div>
             </DialogContent>

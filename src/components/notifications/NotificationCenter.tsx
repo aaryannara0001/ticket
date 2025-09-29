@@ -190,7 +190,8 @@ export function NotificationCenter() {
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="relative text-white hover:bg-gray-800"
+                    className="relative text-foreground hover:bg-accent"
+                    aria-label="Notifications"
                 >
                     <Bell className="w-5 h-5" />
                     <AnimatePresence>
@@ -199,16 +200,14 @@ export function NotificationCenter() {
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 exit={{ scale: 0 }}
-                                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
-                            >
-                                {unreadCount > 9 ? '9+' : unreadCount}
-                            </motion.div>
+                                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center"
+                            ></motion.div>
                         )}
                     </AnimatePresence>
                 </Button>
             </PopoverTrigger>
             <PopoverContent
-                className="w-96 p-0 bg-popover border-border"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg p-0 bg-popover border-border"
                 align="end"
                 sideOffset={8}
             >
@@ -247,7 +246,7 @@ export function NotificationCenter() {
                     )}
                 </div>
 
-                <ScrollArea className="h-96">
+                <ScrollArea className="max-h-[60vh] sm:max-h-[56vh] md:max-h-[48vh]">
                     <div className="p-2">
                         <AnimatePresence>
                             {notifications.length === 0 ? (

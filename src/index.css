@@ -10,7 +10,6 @@
 
 body {
     margin: 0;
-    min-width: 320px;
     min-height: 100vh;
 }
 
@@ -86,7 +85,7 @@ body {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 ::-webkit-scrollbar-track {

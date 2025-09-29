@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -191,41 +192,33 @@ export function ProjectsPage() {
     }
 
     return (
-        <div className="container mx-auto px-6 py-8 max-w-7xl space-y-6">
-            {/* Header */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between"
-            >
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground mb-2">
-                        Projects
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Manage and track your project epics and initiatives
-                    </p>
-                </div>
-                <div className="flex items-center space-x-3">
-                    <Button
-                        onClick={exportToCSV}
-                        variant="outline"
-                        className="border-border text-foreground hover:bg-accent"
-                    >
-                        <Download className="w-4 h-4 mr-2" />
-                        Export
-                    </Button>
-                    {hasPermission('epics') && (
+        <div className="space-y-4 sm:space-y-6">
+            <PageHeader
+                title="Projects"
+                actions={
+                    <>
                         <Button
-                            onClick={() => setShowCreateModal(true)}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            onClick={exportToCSV}
+                            variant="outline"
+                            size="sm"
+                            className="border-border text-foreground hover:bg-accent"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Create Project
+                            <Download className="w-4 h-4 mr-1 sm:mr-2" />
+                            <span className="hidden xs:inline">Export</span>
                         </Button>
-                    )}
-                </div>
-            </motion.div>
+                        {hasPermission('epics') && (
+                            <Button
+                                onClick={() => setShowCreateModal(true)}
+                                size="sm"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            >
+                                <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                                <span className="hidden xs:inline">Create</span>
+                            </Button>
+                        )}
+                    </>
+                }
+            />
 
             {/* Filters */}
             <motion.div
@@ -234,9 +227,10 @@ export function ProjectsPage() {
                 transition={{ delay: 0.1 }}
             >
                 <Card className="bg-card border-border shadow-lg">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col lg:flex-row gap-4">
-                            <div className="relative flex-1">
+                    <CardContent className="p-3 sm:p-4 md:p-6">
+                        <div className="space-y-3 sm:space-y-4">
+                            {/* Search bar - full width */}
+                            <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                                 <Input
                                     placeholder="Search projects..."
@@ -247,14 +241,16 @@ export function ProjectsPage() {
                                     className="pl-10 bg-background border-border text-foreground placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                                 />
                             </div>
-                            <div className="flex gap-3">
+
+                            {/* Filters - responsive grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Select
                                     value={statusFilter}
                                     onValueChange={setStatusFilter}
                                 >
-                                    <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground w-40">
+                                    <SelectTrigger className="bg-background border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary [&>span]:text-foreground">
                                         <SelectValue
-                                            placeholder="Status"
+                                            placeholder="All Status"
                                             className="text-foreground"
                                         />
                                     </SelectTrigger>
@@ -298,13 +294,125 @@ export function ProjectsPage() {
                 transition={{ delay: 0.2 }}
             >
                 <Card className="bg-card border-border shadow-lg">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-foreground text-lg font-semibold">
+                    <CardHeader className="pb-3 sm:pb-4">
+                        <CardTitle className="text-foreground text-base sm:text-lg font-semibold">
                             Projects ({filteredEpics.length})
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto">
+                    <CardContent className="p-0 sm:p-6">
+                        {/* Mobile Card View */}
+                        <div className="block sm:hidden">
+                            <div className="space-y-3 p-3">
+                                {filteredEpics.map((epic) => (
+                                    <div
+                                        key={epic.id}
+                                        className="bg-accent/20 border border-border rounded-lg p-4 space-y-3"
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1 min-w-0 flex-1">
+                                                <div className="font-semibold text-foreground">
+                                                    {epic.title}
+                                                </div>
+                                                <div className="text-sm text-muted-foreground truncate">
+                                                    {epic.description}
+                                                </div>
+                                            </div>
+                                            <div className="flex space-x-1 ml-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() =>
+                                                        handleViewEpic(epic)
+                                                    }
+                                                    className="text-primary hover:bg-primary/10 p-1"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
+                                                {hasPermission('epics') && (
+                                                    <>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                handleEditEpic(
+                                                                    epic,
+                                                                )
+                                                            }
+                                                            className="text-yellow-500 hover:bg-yellow-500/10 p-1"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                handleDeleteEpic(
+                                                                    epic,
+                                                                )
+                                                            }
+                                                            className="text-destructive hover:bg-destructive/10 p-1"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <Badge
+                                                style={{
+                                                    backgroundColor:
+                                                        statusColors[
+                                                            epic.status
+                                                        ] + '30',
+                                                    color: statusColors[
+                                                        epic.status
+                                                    ],
+                                                    border: `1px solid ${
+                                                        statusColors[
+                                                            epic.status
+                                                        ]
+                                                    }60`,
+                                                }}
+                                                className="font-medium text-xs"
+                                            >
+                                                {epic.status.replace('_', ' ')}
+                                            </Badge>
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-16 bg-muted rounded-full h-2">
+                                                    <div
+                                                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                                                        style={{
+                                                            width: `${epic.progress}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {epic.progress}%
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                            <span>
+                                                {epic.stories?.length || 0}{' '}
+                                                stories
+                                            </span>
+                                            <span>
+                                                {formatDistanceToNow(
+                                                    epic.createdAt,
+                                                    { addSuffix: true },
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-border">
