@@ -7,7 +7,6 @@ import { ArrowRight } from 'lucide-react';
 export function RoleWidgets() {
     const user = useAuthStore((s) => s.user);
     const dashboardStats = useTicketStore((s) => s.dashboardStats);
-    const loading = useTicketStore((s) => s.loading);
 
     if (!user) return null;
 

@@ -74,7 +74,7 @@ export function MultiSelect({
         } else {
             onChange(options.map((option) => option.value));
         }
-    }, [selected.length, options.length, handleClear, onChange, options]);
+    }, [selected.length, handleClear, onChange, options]);
 
     const filteredOptions = React.useMemo(() => {
         if (!searchValue) return options;

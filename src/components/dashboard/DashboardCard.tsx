@@ -1,13 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import {
-    AlertTriangle,
-    Clock,
-    LucideIcon,
-    Ticket,
-    TrendingUp,
-} from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface DashboardCardProps {
     title: string;
@@ -176,76 +170,5 @@ export function DashboardCard({
                 </CardContent>
             </Card>
         </motion.div>
-    );
-}
-
-// Predefined card configurations for common use cases
-export const DashboardCardPresets = {
-    critical: (value: number | string, delay?: number) => ({
-        title: 'Critical Issues',
-        value,
-        cardType: 'critical' as const,
-        delay,
-    }),
-    inProgress: (value: number | string, delay?: number) => ({
-        title: 'In Progress',
-        value,
-        cardType: 'in_progress' as const,
-        delay,
-    }),
-    resolved: (value: number | string, delay?: number) => ({
-        title: 'Resolved',
-        value,
-        cardType: 'resolved' as const,
-        delay,
-    }),
-    openTickets: (value: number | string, delay?: number) => ({
-        title: 'Open Tickets',
-        value,
-        cardType: 'open_tickets' as const,
-        delay,
-    }),
-};
-
-// Example usage component demonstrating different card types
-export function DashboardCardExample() {
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <DashboardCard
-                title="Open Tickets"
-                value={42}
-                icon={Ticket}
-                cardType="open_tickets"
-                delay={0}
-                trend={{ value: 12, isPositive: false }}
-            />
-
-            <DashboardCard
-                title="In Progress"
-                value={28}
-                icon={Clock}
-                cardType="in_progress"
-                delay={0.1}
-                trend={{ value: 8, isPositive: true }}
-            />
-
-            <DashboardCard
-                title="Critical Issues"
-                value={5}
-                icon={AlertTriangle}
-                cardType="critical"
-                delay={0.2}
-                trend={{ value: 25, isPositive: false }}
-            />
-
-            <DashboardCard
-                title="Resolved"
-                value={134}
-                icon={TrendingUp}
-                cardType="resolved"
-                delay={0.3}
-                trend={{ value: 15, isPositive: true }}
-            />
-        </div>
     );
 }

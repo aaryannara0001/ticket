@@ -1,4 +1,3 @@
-import { DevChecks } from '@/components/dev/DevChecks';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTicketStore } from '@/store/ticketStore';
 import { motion } from 'framer-motion';
@@ -224,15 +223,6 @@ export function Dashboard() {
                 transition={{ delay: 0.6 }}
             >
                 <DashboardStats stats={dashboardStats} />
-            </motion.div>
-
-            {/* Dev system checks - run to validate store and ticket flows */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.65 }}
-            >
-                <DevChecks />
             </motion.div>
 
             {/* Recent Activity */}

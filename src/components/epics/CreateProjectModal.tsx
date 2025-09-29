@@ -388,7 +388,7 @@ export function CreateProjectModal({
                 deliverables: [''],
             });
             onOpenChange(false);
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Error',
                 description: 'Failed to create project',

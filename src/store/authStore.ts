@@ -5,6 +5,7 @@ import { useSettingsStore } from './settingsStore';
 
 interface AuthState {
     user: User | null;
+    users: User[];
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
@@ -27,20 +28,6 @@ interface AuthState {
     updateUser: (id: string, patch: Partial<User>) => Promise<boolean>;
     deleteUser: (id: string) => Promise<boolean>;
 }
-
-// Mock users for demo - keep only a single admin seed to avoid duplicated mock data across app
-const mockUsers: User[] = [
-    {
-        id: '1',
-        name: 'John Admin',
-        email: 'admin@company.com',
-        role: 'admin',
-        department: 'IT',
-        isActive: true,
-        createdAt: new Date(),
-        avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-];
 
 const rolePermissions: Record<string, string[]> = {
     admin: ['*'],
@@ -92,11 +79,23 @@ export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
             user: null,
+            users: [
+                {
+                    id: '1',
+                    name: 'John Admin',
+                    email: 'admin@company.com',
+                    role: 'admin',
+                    department: 'IT',
+                    isActive: true,
+                    createdAt: new Date(),
+                    avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150',
+                },
+            ],
             isAuthenticated: false,
 
             login: async (email: string, password: string) => {
                 // Mock authentication
-                const user = mockUsers.find((u) => u.email === email);
+                const user = get().users.find((u) => u.email === email);
                 if (user && password === 'password') {
                     set({ user, isAuthenticated: true });
                     return true;
@@ -111,7 +110,7 @@ export const useAuthStore = create<AuthState>()(
                 role: User['role'],
             ) => {
                 // Simple mock register: prevent duplicates
-                const existing = mockUsers.find((u) => u.email === email);
+                const existing = get().users.find((u) => u.email === email);
                 if (existing) return false;
 
                 const newUser: User = {
@@ -124,18 +123,18 @@ export const useAuthStore = create<AuthState>()(
                     createdAt: new Date(),
                 } as User;
 
-                // Add to mock users store (in-memory)
-                mockUsers.push(newUser);
-
-                // Set as authenticated user
-                set({ user: newUser, isAuthenticated: true });
+                // Add to users store (in-memory)
+                set((state) => ({
+                    user: newUser,
+                    isAuthenticated: true,
+                    users: [...state.users, newUser],
+                }));
                 return true;
             },
 
             // User helpers
             getUsers: () => {
-                // return a shallow copy to avoid accidental mutation
-                return mockUsers.map((u) => ({ ...u }));
+                return get().users;
             },
 
             createUser: async (
@@ -145,7 +144,7 @@ export const useAuthStore = create<AuthState>()(
                 role: User['role'],
                 department?: string,
             ) => {
-                const existing = mockUsers.find((u) => u.email === email);
+                const existing = get().users.find((u) => u.email === email);
                 if (existing) return null;
                 const newUser: User = {
                     id: String(Date.now()),
@@ -158,14 +157,18 @@ export const useAuthStore = create<AuthState>()(
                     isActive: true,
                     createdAt: new Date(),
                 } as User;
-                mockUsers.push(newUser);
+                set((state) => ({ users: [...state.users, newUser] }));
                 return { ...newUser };
             },
 
             updateUser: async (id: string, patch: Partial<User>) => {
-                const idx = mockUsers.findIndex((u) => u.id === id);
+                const idx = get().users.findIndex((u) => u.id === id);
                 if (idx === -1) return false;
-                mockUsers[idx] = { ...mockUsers[idx], ...patch };
+                set((state) => {
+                    const users = [...state.users];
+                    users[idx] = { ...users[idx], ...patch };
+                    return { users };
+                });
 
                 // If current authenticated user was updated, update store user as well
                 const { user } = get();
@@ -177,9 +180,13 @@ export const useAuthStore = create<AuthState>()(
             },
 
             deleteUser: async (id: string) => {
-                const idx = mockUsers.findIndex((u) => u.id === id);
+                const idx = get().users.findIndex((u) => u.id === id);
                 if (idx === -1) return false;
-                mockUsers.splice(idx, 1);
+                set((state) => {
+                    const users = [...state.users];
+                    users.splice(idx, 1);
+                    return { users };
+                });
 
                 // if deleted current user, logout
                 const { user } = get();

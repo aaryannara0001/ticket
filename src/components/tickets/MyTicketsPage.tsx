@@ -105,7 +105,7 @@ export function MyTicketsPage() {
                     title: 'Success',
                     description: 'Ticket deleted successfully',
                 });
-            } catch (e) {
+            } catch {
                 // keep generic error handling; variable renamed to avoid unused var lint
                 toast({
                     title: 'Error',

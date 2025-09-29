@@ -46,30 +46,6 @@ import {
 import { useEffect, useState } from 'react';
 import { PermissionsPage } from './PermissionsPage';
 
-const mockDepartments: Department[] = [
-    {
-        id: '1',
-        name: 'Engineering',
-        description: 'Software development and technical implementation',
-        managerId: '2',
-        members: [],
-    },
-    {
-        id: '2',
-        name: 'IT',
-        description: 'Information technology and system administration',
-        managerId: '1',
-        members: [],
-    },
-    {
-        id: '3',
-        name: 'Support',
-        description: 'Customer support and technical assistance',
-        managerId: '2',
-        members: [],
-    },
-];
-
 const roleColors = {
     admin: '#EF4444',
     manager: '#F97316',
@@ -148,8 +124,7 @@ export function AdminPage() {
         });
         return unsub;
     }, []);
-    const [departments, setDepartments] =
-        useState<Department[]>(mockDepartments);
+    const [departments, setDepartments] = useState<Department[]>([]);
     const [showUserModal, setShowUserModal] = useState(false);
     const [showDepartmentModal, setShowDepartmentModal] = useState(false);
     const [showProjectModal, setShowProjectModal] = useState(false);
@@ -1260,30 +1235,12 @@ export function AdminPage() {
                                     <div className="mt-1 flex items-center space-x-2">
                                         <Progress
                                             value={viewingProject.progress}
-                                            className="flex-1"
+                                            className="w-16"
                                         />
                                         <span className="text-sm text-muted-foreground">
                                             {viewingProject.progress}%
                                         </span>
                                     </div>
-                                </div>
-                                <div>
-                                    <Label className="text-popover-foreground">
-                                        Stories
-                                    </Label>
-                                    <p className="text-muted-foreground mt-1">
-                                        {viewingProject.stories.length} stories
-                                    </p>
-                                </div>
-                                <div>
-                                    <Label className="text-popover-foreground">
-                                        Created
-                                    </Label>
-                                    <p className="text-muted-foreground mt-1">
-                                        {new Date(
-                                            viewingProject.createdAt,
-                                        ).toLocaleDateString()}
-                                    </p>
                                 </div>
                             </div>
                             {viewingProject.stories.length > 0 && (

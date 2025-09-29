@@ -96,7 +96,7 @@ export function ProjectsPage() {
                     title: 'Success',
                     description: 'Project deleted successfully',
                 });
-            } catch (error) {
+            } catch {
                 toast({
                     title: 'Error',
                     description: 'Failed to delete project',
@@ -124,7 +124,7 @@ export function ProjectsPage() {
                 title: 'Success',
                 description: 'Project created successfully',
             });
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Error',
                 description: 'Failed to create project',

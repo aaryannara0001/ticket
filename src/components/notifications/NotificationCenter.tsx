@@ -41,61 +41,8 @@ export interface Notification {
     updatedAt: Date;
 }
 
-const mockNotifications: Notification[] = [
-    {
-        id: '1',
-        type: 'mention',
-        message: 'You were mentioned in TSK-007 by Lisa Client',
-        relatedTicket: 'TSK-007',
-        read: false,
-        severity: 'info',
-        createdAt: new Date('2024-01-17T11:45:00Z'),
-        updatedAt: new Date('2024-01-17T11:45:00Z'),
-    },
-    {
-        id: '2',
-        type: 'assignment',
-        message: 'TSK-008 has been assigned to you',
-        relatedTicket: 'TSK-008',
-        read: false,
-        severity: 'info',
-        createdAt: new Date('2024-01-18T09:15:00Z'),
-        updatedAt: new Date('2024-01-18T09:15:00Z'),
-    },
-    {
-        id: '3',
-        type: 'sla_breach',
-        message: 'TSK-001 is approaching SLA deadline',
-        relatedTicket: 'TSK-001',
-        read: true,
-        severity: 'warning',
-        createdAt: new Date('2024-01-16T14:30:00Z'),
-        updatedAt: new Date('2024-01-16T15:00:00Z'),
-    },
-    {
-        id: '4',
-        type: 'status_change',
-        message: 'TSK-003 status changed to Resolved',
-        relatedTicket: 'TSK-003',
-        read: true,
-        severity: 'info',
-        createdAt: new Date('2024-01-18T14:20:00Z'),
-        updatedAt: new Date('2024-01-18T14:25:00Z'),
-    },
-    {
-        id: '5',
-        type: 'report_ready',
-        message: 'Your monthly ticket report is ready for download',
-        read: false,
-        severity: 'info',
-        createdAt: new Date('2024-01-18T16:00:00Z'),
-        updatedAt: new Date('2024-01-18T16:00:00Z'),
-    },
-];
-
 export function NotificationCenter() {
-    const [notifications, setNotifications] =
-        useState<Notification[]>(mockNotifications);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const { user } = useAuthStore();
 

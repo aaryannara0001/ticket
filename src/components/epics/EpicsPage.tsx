@@ -107,7 +107,7 @@ export function EpicsPage() {
                 title: 'Success',
                 description: 'Story created successfully',
             });
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Error',
                 description: 'Failed to create story',
@@ -133,7 +133,7 @@ export function EpicsPage() {
                 title: 'Success',
                 description: 'Sub-task created successfully',
             });
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Error',
                 description: 'Failed to create sub-task',
@@ -150,7 +150,7 @@ export function EpicsPage() {
     ) => {
         try {
             await updateSubTask(projectId, storyId, subTaskId, { completed });
-        } catch (error) {
+        } catch {
             toast({
                 title: 'Error',
                 description: 'Failed to update sub-task',
