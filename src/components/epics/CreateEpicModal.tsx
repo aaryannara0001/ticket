@@ -61,7 +61,11 @@ export function CreateEpicModal({
             onOpenChange(false);
         } catch {
             // ignore specific error object to satisfy lint
-            setError('Failed to create epic');
+            toast({
+                title: 'Error',
+                description: 'Failed to create epic',
+                variant: 'destructive',
+            });
         } finally {
             setLoading(false);
         }

@@ -1,5 +1,6 @@
 import { Attachment, Comment, DashboardStats, Ticket } from '@/types';
 import { create } from 'zustand';
+import { apiService } from '../services/api';
 import { useAuthStore } from './authStore';
 
 // Minimal TicketState interface (only the members used across the app/tests)
@@ -26,6 +27,31 @@ interface TicketState {
     // Real-time controls
     startRealtimeUpdates: () => void;
     stopRealtimeUpdates: () => void;
+}
+
+// Helper to convert API ticket to frontend ticket format
+function convertApiTicketToFrontend(apiTicket: any): Ticket {
+    return {
+        id: apiTicket.id,
+        key: apiTicket.key,
+        title: apiTicket.title,
+        description: apiTicket.description,
+        type: 'task', // Default type
+        status: apiTicket.status,
+        priority: apiTicket.priority,
+        department: apiTicket.department || 'Unassigned',
+        reporterId: apiTicket.reporterId,
+        assigneeId: apiTicket.assigneeIds?.[0], // Take first assignee for compatibility
+        assigneeIds: apiTicket.assigneeIds || [],
+        createdAt: new Date(apiTicket.createdAt),
+        updatedAt: apiTicket.updatedAt
+            ? new Date(apiTicket.updatedAt)
+            : undefined,
+        reporter: undefined, // Will be populated by real user data
+        assignee: undefined, // Will be populated by real user data
+        comments: [],
+        attachments: [],
+    };
 }
 
 // Helper to compute dashboard stats from tickets (returns shape from src/types)
@@ -59,20 +85,6 @@ function computeStatsFromTickets(tickets: Ticket[]): DashboardStats {
             ticketId: t.id,
             createdAt: t.createdAt,
         });
-
-        // If there are comments, add the latest comment as activity
-        if (t.comments && t.comments.length > 0) {
-            const last = t.comments[t.comments.length - 1];
-            recentActivity.push({
-                id: `${t.id}-comment-${last.id}`,
-                type: 'comment_added',
-                description: last.content,
-                userId: last.authorId,
-                user: last.author,
-                ticketId: t.id,
-                createdAt: last.createdAt,
-            });
-        }
     });
 
     // sort recent activity by date desc and keep 5
@@ -103,282 +115,260 @@ let _realtimeInterval: number | null = null;
 export const useTicketStore = create<TicketState>((set, get) => ({
     tickets: [],
     selectedTicket: null,
-    dashboardStats: computeStatsFromTickets([]),
+    dashboardStats: null,
     loading: false,
 
     fetchTickets: async (filter) => {
-        set({ loading: true });
-        await new Promise((r) => setTimeout(r, 200));
-        const { user } = useAuthStore.getState();
-        let filtered = get().tickets;
-
-        if (filter === 'assigned' && user) {
-            filtered = get().tickets.filter(
-                (t) =>
-                    t.assigneeId === user.id ||
-                    (t.assigneeIds && t.assigneeIds.includes(user.id)),
-            );
-        } else if (filter === 'reported' && user) {
-            filtered = get().tickets.filter((t) => t.reporterId === user.id);
-        } else {
-            if (user?.role === 'client') {
-                filtered = get().tickets.filter(
-                    (t) => t.reporterId === user.id,
-                );
-            } else if (user?.role === 'team_member') {
-                filtered = get().tickets.filter(
-                    (t) =>
-                        t.assigneeId === user.id ||
-                        (t.assigneeIds && t.assigneeIds.includes(user.id)) ||
-                        t.department === user.department,
-                );
-            }
+        // Don't fetch if not authenticated
+        const isAuthenticated = useAuthStore.getState().user ? true : false;
+        if (!isAuthenticated) {
+            set({ tickets: [], loading: false });
+            return;
         }
 
-        set({ tickets: filtered, loading: false });
+        try {
+            set({ loading: true });
+
+            let apiTickets;
+            if (filter === 'assigned') {
+                apiTickets = await apiService.getMyTickets();
+            } else {
+                apiTickets = await apiService.getTickets();
+            }
+
+            const tickets = apiTickets.map(convertApiTicketToFrontend);
+
+            // Apply client-side filtering if needed
+            const { user } = useAuthStore.getState();
+            let filtered = tickets;
+
+            if (filter === 'reported' && user) {
+                filtered = tickets.filter((t) => t.reporterId === user.id);
+            } else if (user?.role === 'client') {
+                filtered = tickets.filter((t) => t.reporterId === user.id);
+            }
+
+            set({ tickets: filtered, loading: false });
+        } catch (error) {
+            console.error('Failed to fetch tickets:', error);
+            set({ loading: false });
+        }
     },
 
     fetchDashboardStats: async () => {
-        set({ loading: true });
-        await new Promise((r) => setTimeout(r, 150));
-        const tickets = get().tickets;
-        const stats = computeStatsFromTickets(tickets);
-        set({ dashboardStats: stats, loading: false });
+        // Don't fetch if not authenticated
+        const isAuthenticated = useAuthStore.getState().user ? true : false;
+        if (!isAuthenticated) {
+            set({ dashboardStats: null, loading: false });
+            return;
+        }
+
+        try {
+            set({ loading: true });
+            const stats = await apiService.getDashboardStats();
+
+            // Convert API response to frontend format
+            const frontendStats: DashboardStats = {
+                ...stats,
+                recentActivity: stats.recentActivity.map((activity) => ({
+                    id: activity.id,
+                    type: 'ticket_created' as const, // Default type
+                    description: activity.message,
+                    userId: '', // Not provided by API
+                    ticketId: '', // Not provided by API
+                    createdAt: new Date(activity.createdAt),
+                })),
+            };
+
+            set({ dashboardStats: frontendStats, loading: false });
+        } catch (error) {
+            console.error('Failed to fetch dashboard stats:', error);
+            // Fallback to computed stats from current tickets
+            const tickets = get().tickets;
+            const stats = computeStatsFromTickets(tickets);
+            set({ dashboardStats: stats, loading: false });
+        }
     },
 
     createTicket: async (ticketData) => {
-        const { user } = useAuthStore.getState();
-        const authUsers = useAuthStore.getState().getUsers();
-        const newTicket: Ticket = {
-            ...ticketData,
-            id: Date.now().toString(),
-            key: `PROJ-${String(get().tickets.length + 1).padStart(3, '0')}`,
-            reporterId: user?.id || '1',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            attachments: [],
-            comments: [],
-            assignees: ticketData.assigneeIds
-                ? authUsers.filter((u) =>
-                      ticketData.assigneeIds?.includes(u.id),
-                  )
-                : undefined,
-        } as Ticket;
+        try {
+            const apiTicket = await apiService.createTicket({
+                title: ticketData.title,
+                description: ticketData.description,
+                priority: ticketData.priority,
+                department: ticketData.department,
+                assigneeIds: ticketData.assigneeIds,
+            });
 
-        set((state) => ({ tickets: [newTicket, ...state.tickets] }));
+            const newTicket = convertApiTicketToFrontend(apiTicket);
+            set((state) => ({
+                tickets: [...state.tickets, newTicket],
+            }));
+
+            // Refresh dashboard stats
+            get().fetchDashboardStats();
+        } catch (error) {
+            console.error('Failed to create ticket:', error);
+            throw error;
+        }
     },
 
     updateTicket: async (id, updates) => {
-        set((state) => ({
-            tickets: state.tickets.map((ticket) => {
-                if (ticket.id === id) {
-                    const updatedTicket = {
-                        ...ticket,
-                        ...updates,
-                        updatedAt: new Date(),
-                    } as Ticket;
-                    if (updates.assigneeId !== undefined) {
-                        const authUsers = useAuthStore.getState().getUsers();
-                        updatedTicket.assignee = authUsers.find(
-                            (u) => u.id === updates.assigneeId,
-                        ) as any;
-                    }
-                    if (updates.assigneeIds !== undefined) {
-                        const authUsers = useAuthStore.getState().getUsers();
-                        updatedTicket.assignees =
-                            updates.assigneeIds &&
-                            updates.assigneeIds.length > 0
-                                ? authUsers.filter((u) =>
-                                      updates.assigneeIds?.includes(u.id),
-                                  )
-                                : undefined;
-                    }
-                    return updatedTicket;
-                }
-                return ticket;
-            }),
-            selectedTicket:
-                state.selectedTicket?.id === id
-                    ? {
-                          ...state.selectedTicket,
-                          ...updates,
-                          updatedAt: new Date(),
-                      }
-                    : state.selectedTicket,
-        }));
+        try {
+            const apiTicket = await apiService.updateTicket(id, {
+                title: updates.title,
+                description: updates.description,
+                status: updates.status,
+                priority: updates.priority,
+                department: updates.department,
+                assigneeIds: updates.assigneeIds,
+            });
+
+            const updatedTicket = convertApiTicketToFrontend(apiTicket);
+
+            set((state) => ({
+                tickets: state.tickets.map((t) =>
+                    t.id === id ? updatedTicket : t,
+                ),
+                selectedTicket:
+                    state.selectedTicket?.id === id
+                        ? updatedTicket
+                        : state.selectedTicket,
+            }));
+
+            // Refresh dashboard stats
+            get().fetchDashboardStats();
+        } catch (error) {
+            console.error('Failed to update ticket:', error);
+            throw error;
+        }
     },
 
     deleteTicket: async (id) => {
-        set((state) => ({
-            tickets: state.tickets.filter((ticket) => ticket.id !== id),
-            selectedTicket:
-                state.selectedTicket?.id === id ? null : state.selectedTicket,
-        }));
+        try {
+            // Note: Delete endpoint not implemented in backend yet
+            // await apiService.deleteTicket(id);
+
+            set((state) => ({
+                tickets: state.tickets.filter((t) => t.id !== id),
+                selectedTicket:
+                    state.selectedTicket?.id === id
+                        ? null
+                        : state.selectedTicket,
+            }));
+
+            // Refresh dashboard stats
+            get().fetchDashboardStats();
+        } catch (error) {
+            console.error('Failed to delete ticket:', error);
+            throw error;
+        }
     },
 
-    setSelectedTicket: (ticket) => set({ selectedTicket: ticket }),
+    setSelectedTicket: (ticket) => {
+        set({ selectedTicket: ticket });
+    },
 
     addComment: async (ticketId, content) => {
-        const { user } = useAuthStore.getState();
-        if (!user) return;
-        const newComment: Comment = {
-            id: Date.now().toString(),
-            content,
-            authorId: user.id,
-            author: user,
-            ticketId,
-            createdAt: new Date(),
-            mentions: [],
-        } as Comment;
+        try {
+            // Note: Comments endpoint not implemented in backend yet
+            // For now, just add locally
+            const { user } = useAuthStore.getState();
+            if (!user) return;
 
-        set((state) => ({
-            tickets: state.tickets.map((ticket) =>
-                ticket.id === ticketId
-                    ? { ...ticket, comments: [...ticket.comments, newComment] }
-                    : ticket,
-            ),
-            selectedTicket:
-                state.selectedTicket?.id === ticketId
-                    ? {
-                          ...state.selectedTicket,
-                          comments: [
-                              ...state.selectedTicket.comments,
-                              newComment,
-                          ],
-                      }
-                    : state.selectedTicket,
-        }));
+            const newComment: Comment = {
+                id: Date.now().toString(),
+                content,
+                authorId: user.id,
+                author: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email || '',
+                    role: user.role,
+                    isActive: user.isActive,
+                    createdAt: user.createdAt,
+                },
+                ticketId,
+                createdAt: new Date(),
+                mentions: [],
+            };
+
+            set((state) => ({
+                tickets: state.tickets.map((t) =>
+                    t.id === ticketId
+                        ? {
+                              ...t,
+                              comments: [...(t.comments || []), newComment],
+                          }
+                        : t,
+                ),
+                selectedTicket:
+                    state.selectedTicket?.id === ticketId
+                        ? {
+                              ...state.selectedTicket,
+                              comments: [
+                                  ...(state.selectedTicket.comments || []),
+                                  newComment,
+                              ],
+                          }
+                        : state.selectedTicket,
+            }));
+        } catch (error) {
+            console.error('Failed to add comment:', error);
+            throw error;
+        }
     },
 
-    addAttachment: async (ticketId, attachmentData) => {
-        const { user } = useAuthStore.getState();
-        if (!user) return;
-        const newAttachment: Attachment = {
-            ...attachmentData,
-            id: Date.now().toString(),
-            uploadedBy: user.id,
-            uploadedAt: new Date(),
-        } as Attachment;
+    addAttachment: async (ticketId, attachment) => {
+        try {
+            // Note: Attachments endpoint not fully implemented yet
+            // For now, just add locally
+            const newAttachment: Attachment = {
+                ...attachment,
+                id: Date.now().toString(),
+                uploadedAt: new Date(),
+            };
 
-        set((state) => ({
-            tickets: state.tickets.map((ticket) =>
-                ticket.id === ticketId
-                    ? {
-                          ...ticket,
-                          attachments: [...ticket.attachments, newAttachment],
-                      }
-                    : ticket,
-            ),
-            selectedTicket:
-                state.selectedTicket?.id === ticketId
-                    ? {
-                          ...state.selectedTicket,
-                          attachments: [
-                              ...state.selectedTicket.attachments,
-                              newAttachment,
-                          ],
-                      }
-                    : state.selectedTicket,
-        }));
+            set((state) => ({
+                tickets: state.tickets.map((t) =>
+                    t.id === ticketId
+                        ? {
+                              ...t,
+                              attachments: [
+                                  ...(t.attachments || []),
+                                  newAttachment,
+                              ],
+                          }
+                        : t,
+                ),
+                selectedTicket:
+                    state.selectedTicket?.id === ticketId
+                        ? {
+                              ...state.selectedTicket,
+                              attachments: [
+                                  ...(state.selectedTicket.attachments || []),
+                                  newAttachment,
+                              ],
+                          }
+                        : state.selectedTicket,
+            }));
+        } catch (error) {
+            console.error('Failed to add attachment:', error);
+            throw error;
+        }
     },
 
     startRealtimeUpdates: () => {
         if (_realtimeInterval) return;
+
         _realtimeInterval = window.setInterval(() => {
-            // simple random event: create or update
-            const rnd = Math.random();
-            if (rnd < 0.4) {
-                // create a new ticket
-                const authUsersNow = useAuthStore.getState().getUsers();
-                const reporterId =
-                    useAuthStore.getState().user?.id ||
-                    (authUsersNow[0]?.id ?? '1');
-                const newT: Ticket = {
-                    id: Date.now().toString(),
-                    key: `PROJ-${Math.floor(Math.random() * 1000)}`,
-                    title: `Realtime ${Date.now()}`,
-                    description: 'Auto-generated',
-                    type: 'task',
-                    priority: Math.random() < 0.2 ? 'critical' : 'low',
-                    status: 'open',
-                    reporterId,
-                    department: 'Engineering',
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    attachments: [],
-                    comments: [],
-                } as Ticket;
-                set((s) => ({
-                    tickets: [newT, ...s.tickets],
-                    dashboardStats: computeStatsFromTickets([
-                        newT,
-                        ...s.tickets,
-                    ]),
-                }));
-            } else {
-                // update random ticket status or add comment
-                const state = get();
-                if (state.tickets.length === 0) return;
-                const idx = Math.floor(Math.random() * state.tickets.length);
-                const ticket = state.tickets[idx];
-                if (!ticket) return;
-                const op = Math.random();
-                if (op < 0.5) {
-                    // change status
-                    const newStatus = (
-                        ticket.status === 'open'
-                            ? 'in_progress'
-                            : ticket.status === 'in_progress'
-                            ? 'resolved'
-                            : 'closed'
-                    ) as Ticket['status'];
-                    set((s) => {
-                        const updated = s.tickets.map((t) =>
-                            t.id === ticket.id
-                                ? {
-                                      ...t,
-                                      status: newStatus,
-                                      updatedAt: new Date(),
-                                  }
-                                : t,
-                        );
-                        return {
-                            tickets: updated,
-                            dashboardStats: computeStatsFromTickets(updated),
-                        };
-                    });
-                } else {
-                    // add comment
-                    const authUsersNow = useAuthStore.getState().getUsers();
-                    const authorUser =
-                        useAuthStore.getState().user || authUsersNow[0];
-                    const comment: Comment = {
-                        id: Date.now().toString(),
-                        content: 'Realtime comment',
-                        authorId: authorUser?.id,
-                        author: (authorUser as any) || authUsersNow[0],
-                        ticketId: ticket.id,
-                        createdAt: new Date(),
-                        mentions: [],
-                    } as Comment;
-                    set((s) => {
-                        const updated = s.tickets.map((t) =>
-                            t.id === ticket.id
-                                ? {
-                                      ...t,
-                                      comments: [...t.comments, comment],
-                                      updatedAt: new Date(),
-                                  }
-                                : t,
-                        );
-                        return {
-                            tickets: updated,
-                            dashboardStats: computeStatsFromTickets(updated),
-                        };
-                    });
-                }
+            // Only refresh if user is authenticated
+            const isAuthenticated = useAuthStore.getState().user ? true : false;
+            if (isAuthenticated) {
+                get().fetchTickets();
+                get().fetchDashboardStats();
             }
-        }, 5000);
+        }, 30000); // Every 30 seconds
     },
 
     stopRealtimeUpdates: () => {

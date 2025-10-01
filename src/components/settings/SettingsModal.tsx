@@ -46,7 +46,7 @@ export function SettingsModal({ children }: SettingsModalProps) {
 
     const handleSaveSettings = () => {
         // Apply theme change
-        setTheme(tempTheme);
+        setTheme(tempTheme || 'system');
 
         // Save notification settings to localStorage
         localStorage.setItem('pushNotifications', tempNotifications.toString());

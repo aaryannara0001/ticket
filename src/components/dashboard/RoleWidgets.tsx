@@ -151,7 +151,9 @@ export function RoleWidgets() {
                 </div>
             );
 
-        case 'team_member':
+        case 'developer':
+        case 'support':
+        case 'it':
             return (
                 <div className="space-y-4">
                     {common}

@@ -49,62 +49,64 @@ import { PermissionsPage } from './PermissionsPage';
 const roleColors = {
     admin: '#EF4444',
     manager: '#F97316',
-    team_member: '#4ADE80',
-    client: '#8B5CF6',
+    developer: '#4ADE80',
+    support: '#8B5CF6',
+    it: '#06B6D4',
+    client: '#EC4899',
 };
 
 // re-use role/permission definitions from authStore instead of duplicating
 // keep this list for reference but prefix with underscore to indicate intentionally unused
-const _permissions: any = [
-    {
-        id: 'dashboard',
-        name: 'Dashboard',
-        description: 'View dashboard and analytics',
-    },
-    {
-        id: 'tickets',
-        name: 'All Tickets',
-        description: 'View and manage all tickets',
-    },
-    {
-        id: 'my_tickets',
-        name: 'My Tickets',
-        description: 'View own tickets only',
-    },
-    {
-        id: 'create_ticket',
-        name: 'Create Ticket',
-        description: 'Create new tickets',
-    },
-    { id: 'kanban', name: 'Kanban Board', description: 'Access Kanban board' },
-    { id: 'epics', name: 'Epics', description: 'Manage epics and stories' },
-    {
-        id: 'reports',
-        name: 'Reports',
-        description: 'View reports and analytics',
-    },
-    {
-        id: 'team_management',
-        name: 'Team Management',
-        description: 'Manage team members',
-    },
-    { id: '*', name: 'Full Access', description: 'Complete system access' },
-];
+// const _permissions: any = [
+//     {
+//         id: 'dashboard',
+//         name: 'Dashboard',
+//         description: 'View dashboard and analytics',
+//     },
+//     {
+//         id: 'tickets',
+//         name: 'All Tickets',
+//         description: 'View and manage all tickets',
+//     },
+//     {
+//         id: 'my_tickets',
+//         name: 'My Tickets',
+//         description: 'View own tickets only',
+//     },
+//     {
+//         id: 'create_ticket',
+//         name: 'Create Ticket',
+//         description: 'Create new tickets',
+//     },
+//     { id: 'kanban', name: 'Kanban Board', description: 'Access Kanban board' },
+//     { id: 'epics', name: 'Epics', description: 'Manage epics and stories' },
+//     {
+//         id: 'reports',
+//         name: 'Reports',
+//         description: 'View reports and analytics',
+//     },
+//     {
+//         id: 'team_management',
+//         name: 'Team Management',
+//         description: 'Manage team members',
+//     },
+//     { id: '*', name: 'Full Access', description: 'Complete system access' },
+// ];
 
 // keep rolePermissions here for reference; actual permissions are in authStore
-const _rolePermissions: any = {
-    admin: ['*'],
-    manager: [
-        'dashboard',
-        'tickets',
-        'kanban',
-        'epics',
-        'reports',
-        'team_management',
-    ],
-    team_member: ['dashboard', 'tickets', 'kanban', 'my_tickets'],
-    client: ['my_tickets', 'create_ticket'],
-};
+// const _rolePermissions: any = {
+//     admin: ['*'],
+//     manager: [
+//         'dashboard',
+//         'tickets',
+//         'kanban',
+//         'epics',
+//         'reports',
+//         'team_management',
+//     ],
+//     team_member: ['dashboard', 'tickets', 'kanban', 'my_tickets'],
+//     client: ['my_tickets', 'create_ticket'],
+// };
 
 export function AdminPage() {
     const {
@@ -864,10 +866,22 @@ export function AdminPage() {
                                             Manager
                                         </SelectItem>
                                         <SelectItem
-                                            value="team_member"
+                                            value="developer"
                                             className="text-popover-foreground hover:bg-accent focus:bg-accent"
                                         >
-                                            Team Member
+                                            Developer
+                                        </SelectItem>
+                                        <SelectItem
+                                            value="support"
+                                            className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                        >
+                                            Support
+                                        </SelectItem>
+                                        <SelectItem
+                                            value="it"
+                                            className="text-popover-foreground hover:bg-accent focus:bg-accent"
+                                        >
+                                            IT
                                         </SelectItem>
                                         <SelectItem
                                             value="client"

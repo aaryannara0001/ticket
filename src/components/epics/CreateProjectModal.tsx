@@ -26,6 +26,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/store/authStore';
 import { User } from '@/types';
 import {
     Calendar,
@@ -55,123 +56,6 @@ interface CreateProjectModalProps {
     }) => void;
 }
 
-// Mock team members organized by team structure
-const mockTeamMembers: User[] = [
-    // Developer Team
-    {
-        id: '1',
-        name: 'John Frontend Dev',
-        email: 'john.frontend@company.com',
-        role: 'team_member',
-        department: 'Developer Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '2',
-        name: 'Sarah Backend Dev',
-        email: 'sarah.backend@company.com',
-        role: 'team_member',
-        department: 'Developer Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '3',
-        name: 'Mike Full Stack',
-        email: 'mike.fullstack@company.com',
-        role: 'team_member',
-        department: 'Developer Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '4',
-        name: 'Alice Mobile Dev',
-        email: 'alice.mobile@company.com',
-        role: 'team_member',
-        department: 'Developer Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    // IT Team
-    {
-        id: '5',
-        name: 'Bob System Admin',
-        email: 'bob.sysadmin@company.com',
-        role: 'admin',
-        department: 'IT Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '6',
-        name: 'Emma DevOps',
-        email: 'emma.devops@company.com',
-        role: 'manager',
-        department: 'IT Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '7',
-        name: 'David Network Admin',
-        email: 'david.network@company.com',
-        role: 'team_member',
-        department: 'IT Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    // Support Team
-    {
-        id: '8',
-        name: 'Lisa Support Lead',
-        email: 'lisa.support@company.com',
-        role: 'manager',
-        department: 'Support Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '9',
-        name: 'Tom Customer Support',
-        email: 'tom.customer@company.com',
-        role: 'team_member',
-        department: 'Support Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '10',
-        name: 'Anna QA Support',
-        email: 'anna.qa@company.com',
-        role: 'team_member',
-        department: 'Support Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1300402/pexels-photo-1300402.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    {
-        id: '11',
-        name: 'Ryan Help Desk',
-        email: 'ryan.helpdesk@company.com',
-        role: 'team_member',
-        department: 'Support Team',
-        isActive: true,
-        createdAt: new Date('2024-01-01'),
-        avatar: 'https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-];
-
 export function CreateProjectModal({
     open,
     onOpenChange,
@@ -192,6 +76,17 @@ export function CreateProjectModal({
     const [loading, setLoading] = useState(false);
     const [isTeamSelectorOpen, setIsTeamSelectorOpen] = useState(false);
 
+    // Get real users from auth store
+    const { getUsers, loadUsers } = useAuthStore();
+    const allUsers = getUsers();
+
+    // Load users when modal opens
+    useEffect(() => {
+        if (open) {
+            loadUsers();
+        }
+    }, [open, loadUsers]);
+
     // Clear selected members when team changes
     useEffect(() => {
         if (formData.assignedTeam) {
@@ -203,22 +98,22 @@ export function CreateProjectModal({
         }
     }, [formData.assignedTeam]);
 
-    // Map team values to department names
-    const getTeamDepartmentName = (teamValue: string) => {
+    // Map team values to roles for filtering
+    const getTeamRoles = (teamValue: string): string[] => {
         switch (teamValue) {
             case 'developer':
-                return 'Developer Team';
+                return ['developer'];
             case 'it':
-                return 'IT Team';
+                return ['it', 'admin'];
             case 'support':
-                return 'Support Team';
+                return ['support', 'manager'];
             default:
-                return '';
+                return [];
         }
     };
 
-    // Filter available team members based on selected team
-    const availableMembers = mockTeamMembers.filter((member) => {
+    // Filter available team members based on selected team using real users
+    const availableMembers = allUsers.filter((member: User) => {
         // Exclude clients and inactive members
         if (member.role === 'client' || !member.isActive) {
             return false;
@@ -229,23 +124,13 @@ export function CreateProjectModal({
             return false;
         }
 
-        // Only show members from the selected team
-        const selectedDepartment = getTeamDepartmentName(formData.assignedTeam);
-        return member.department === selectedDepartment;
+        // Only show members with roles that match the selected team
+        const allowedRoles = getTeamRoles(formData.assignedTeam);
+        return allowedRoles.includes(member.role);
     });
 
-    // Group members by department for better organization (though now it will only be one department)
-    const membersByDepartment = availableMembers.reduce((acc, member) => {
-        const department = member.department || 'Other';
-        if (!acc[department]) {
-            acc[department] = [];
-        }
-        acc[department].push(member);
-        return acc;
-    }, {} as Record<string, User[]>);
-
     // Get selected members for display
-    const selectedMembers = availableMembers.filter((member) =>
+    const selectedMembers = availableMembers.filter((member: User) =>
         formData.assignedMembers.includes(member.id),
     );
 
@@ -265,19 +150,6 @@ export function CreateProjectModal({
                 (id) => id !== memberId,
             ),
         }));
-    };
-
-    const getDepartmentColor = (department: string) => {
-        switch (department) {
-            case 'Developer Team':
-                return 'text-blue-600 bg-blue-50';
-            case 'IT Team':
-                return 'text-green-600 bg-green-50';
-            case 'Support Team':
-                return 'text-purple-600 bg-purple-50';
-            default:
-                return 'text-gray-600 bg-gray-50';
-        }
     };
 
     const addObjective = () => {
@@ -691,9 +563,7 @@ export function CreateProjectModal({
                                                                           ? 's'
                                                                           : ''
                                                                   } selected`
-                                                                : `Select from ${getTeamDepartmentName(
-                                                                      formData.assignedTeam,
-                                                                  )}...`}
+                                                                : `Select team members...`}
                                                         </div>
                                                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                     </Button>
@@ -705,97 +575,67 @@ export function CreateProjectModal({
                                                             Members
                                                         </div>
                                                         <div className="max-h-60 overflow-y-auto">
-                                                            {Object.entries(
-                                                                membersByDepartment,
-                                                            ).map(
-                                                                ([
-                                                                    department,
-                                                                    members,
-                                                                ]) => (
+                                                            {availableMembers.map(
+                                                                (
+                                                                    member: User,
+                                                                ) => (
                                                                     <div
                                                                         key={
-                                                                            department
+                                                                            member.id
                                                                         }
-                                                                        className="mb-3"
+                                                                        className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent cursor-pointer"
+                                                                        onClick={() =>
+                                                                            toggleMemberSelection(
+                                                                                member.id,
+                                                                            )
+                                                                        }
                                                                     >
-                                                                        <div
-                                                                            className={`text-xs font-semibold px-2 py-1 rounded-md mb-2 ${getDepartmentColor(
-                                                                                department,
-                                                                            )}`}
-                                                                        >
-                                                                            {
-                                                                                department
-                                                                            }{' '}
-                                                                            (
-                                                                            {
-                                                                                members.length
-                                                                            }{' '}
-                                                                            members)
-                                                                        </div>
-                                                                        {members.map(
-                                                                            (
-                                                                                member,
-                                                                            ) => (
-                                                                                <div
-                                                                                    key={
+                                                                        <Checkbox
+                                                                            id={`member-${member.id}`}
+                                                                            checked={formData.assignedMembers.includes(
+                                                                                member.id,
+                                                                            )}
+                                                                            onChange={() =>
+                                                                                toggleMemberSelection(
+                                                                                    member.id,
+                                                                                )
+                                                                            }
+                                                                        />
+                                                                        <div className="flex items-center space-x-2 flex-1">
+                                                                            {member.avatar && (
+                                                                                <img
+                                                                                    src={
+                                                                                        member.avatar
+                                                                                    }
+                                                                                    alt={
+                                                                                        member.name
+                                                                                    }
+                                                                                    className="w-5 h-5 rounded-full object-cover"
+                                                                                />
+                                                                            )}
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-sm font-medium text-popover-foreground">
+                                                                                    {
+                                                                                        member.name
+                                                                                    }
+                                                                                </span>
+                                                                                <span className="text-xs text-muted-foreground">
+                                                                                    {member.role.replace(
+                                                                                        '_',
+                                                                                        ' ',
+                                                                                    )}{' '}
+                                                                                    •
+                                                                                    ID:{' '}
+                                                                                    {
                                                                                         member.id
                                                                                     }
-                                                                                    className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent cursor-pointer ml-2"
-                                                                                    onClick={() =>
-                                                                                        toggleMemberSelection(
-                                                                                            member.id,
-                                                                                        )
-                                                                                    }
-                                                                                >
-                                                                                    <Checkbox
-                                                                                        id={`member-${member.id}`}
-                                                                                        checked={formData.assignedMembers.includes(
-                                                                                            member.id,
-                                                                                        )}
-                                                                                        onChange={() =>
-                                                                                            toggleMemberSelection(
-                                                                                                member.id,
-                                                                                            )
-                                                                                        }
-                                                                                    />
-                                                                                    <div className="flex items-center space-x-2 flex-1">
-                                                                                        {member.avatar && (
-                                                                                            <img
-                                                                                                src={
-                                                                                                    member.avatar
-                                                                                                }
-                                                                                                alt={
-                                                                                                    member.name
-                                                                                                }
-                                                                                                className="w-5 h-5 rounded-full object-cover"
-                                                                                            />
-                                                                                        )}
-                                                                                        <div className="flex flex-col">
-                                                                                            <span className="text-sm font-medium text-popover-foreground">
-                                                                                                {
-                                                                                                    member.name
-                                                                                                }
-                                                                                            </span>
-                                                                                            <span className="text-xs text-muted-foreground">
-                                                                                                {member.role.replace(
-                                                                                                    '_',
-                                                                                                    ' ',
-                                                                                                )}{' '}
-                                                                                                •
-                                                                                                ID:{' '}
-                                                                                                {
-                                                                                                    member.id
-                                                                                                }
-                                                                                            </span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    {formData.assignedMembers.includes(
-                                                                                        member.id,
-                                                                                    ) && (
-                                                                                        <Check className="w-4 h-4 text-primary" />
-                                                                                    )}
-                                                                                </div>
-                                                                            ),
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                        {formData.assignedMembers.includes(
+                                                                            member.id,
+                                                                        ) && (
+                                                                            <Check className="w-4 h-4 text-primary" />
                                                                         )}
                                                                     </div>
                                                                 ),
@@ -816,24 +656,13 @@ export function CreateProjectModal({
                                             </Label>
                                             <div className="flex flex-wrap gap-2">
                                                 {selectedMembers.map(
-                                                    (member) => (
+                                                    (member: User) => (
                                                         <Badge
                                                             key={member.id}
                                                             variant="secondary"
                                                             className="bg-primary/10 text-primary border-primary/20 px-2 py-1 text-xs"
                                                         >
                                                             <div className="flex items-center gap-1">
-                                                                {member.avatar && (
-                                                                    <img
-                                                                        src={
-                                                                            member.avatar
-                                                                        }
-                                                                        alt={
-                                                                            member.name
-                                                                        }
-                                                                        className="w-3 h-3 rounded-full object-cover"
-                                                                    />
-                                                                )}
                                                                 <span>
                                                                     {
                                                                         member.name
@@ -842,7 +671,7 @@ export function CreateProjectModal({
                                                                 <span className="text-xs opacity-70">
                                                                     (
                                                                     {
-                                                                        member.department
+                                                                        member.role
                                                                     }
                                                                     )
                                                                 </span>

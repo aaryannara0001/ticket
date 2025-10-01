@@ -2,10 +2,11 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    role: 'admin' | 'manager' | 'team_member' | 'client';
+    role: 'developer' | 'support' | 'it' | 'manager' | 'admin' | 'client';
     avatar?: string;
     department?: string;
     isActive: boolean;
+    emailVerified?: boolean;
     phone?: string;
     location?: string;
     bio?: string;
@@ -28,7 +29,7 @@ export interface Ticket {
     reporter?: User;
     department: string;
     createdAt: Date;
-    updatedAt: Date;
+    updatedAt?: Date;
     dueDate?: Date;
     attachments: Attachment[];
     comments: Comment[];

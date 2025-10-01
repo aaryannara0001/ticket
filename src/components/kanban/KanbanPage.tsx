@@ -455,7 +455,8 @@ export function KanbanPage() {
                                                                                     </span>
                                                                                     <span>
                                                                                         {formatDistanceToNow(
-                                                                                            ticket.updatedAt,
+                                                                                            ticket.updatedAt ||
+                                                                                                ticket.createdAt,
                                                                                             {
                                                                                                 addSuffix:
                                                                                                     true,

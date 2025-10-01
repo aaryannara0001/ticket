@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/authStore';
-import { useSettingsStore } from '@/store/settingsStore';
 import { motion } from 'framer-motion';
 import { AlertCircle, Lock, Mail } from 'lucide-react';
 import { useState } from 'react';
@@ -16,12 +15,12 @@ export function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const { login, isAuthenticated } = useAuthStore();
-    const settings = useSettingsStore();
+    const { login } = useAuthStore();
+    const isAuthenticated = useAuthStore((state) => !!state.user);
     const navigate = useNavigate();
 
     if (isAuthenticated) {
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to="/" replace />;
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -32,57 +31,12 @@ export function LoginPage() {
         const success = await login(email, password);
 
         if (success) {
-            // choose default route based on role and feature toggles
-            const user = useAuthStore.getState().user;
-
-            const defaultRoute = (() => {
-                if (!user) return '/dashboard';
-                // Admin panel when admin access enabled
-                if (
-                    user.role === 'admin' &&
-                    settings.isFeatureEnabledForRole('adminAccess', user.role)
-                )
-                    return '/admin';
-                if (
-                    settings.isFeatureEnabledForRole(
-                        'dashboardAccess',
-                        user.role,
-                    )
-                )
-                    return '/dashboard';
-                if (
-                    settings.isFeatureEnabledForRole(
-                        'ticketManagement',
-                        user.role,
-                    )
-                )
-                    return '/tickets';
-                if (
-                    settings.isFeatureEnabledForRole(
-                        'ticketManagement',
-                        user.role,
-                    )
-                )
-                    return '/my-tickets';
-                if (settings.isFeatureEnabledForRole('kanbanAccess', user.role))
-                    return '/kanban';
-                if (
-                    settings.isFeatureEnabledForRole(
-                        'projectManagement',
-                        user.role,
-                    )
-                )
-                    return '/epics';
-                if (
-                    settings.isFeatureEnabledForRole('reportsAccess', user.role)
-                )
-                    return '/reports';
-                return '/dashboard';
-            })();
-
-            navigate(defaultRoute);
+            // Redirect to role-based default page
+            navigate('/');
         } else {
-            setError('Invalid email or password');
+            setError(
+                'Login failed. Please check your credentials. If you recently registered, make sure to verify your email address first.',
+            );
         }
 
         setLoading(false);
@@ -196,19 +150,31 @@ export function LoginPage() {
                                     <strong className="text-foreground">
                                         Manager:
                                     </strong>{' '}
-                                    manager@company.com / password
+                                    manager@test.com / password
                                 </p>
                                 <p>
                                     <strong className="text-foreground">
                                         Developer:
                                     </strong>{' '}
-                                    developer@company.com / password
+                                    nishunara862@gmail.com / password
+                                </p>
+                                <p>
+                                    <strong className="text-foreground">
+                                        Support:
+                                    </strong>{' '}
+                                    support@test.com / password
+                                </p>
+                                <p>
+                                    <strong className="text-foreground">
+                                        IT:
+                                    </strong>{' '}
+                                    it@test.com / password
                                 </p>
                                 <p>
                                     <strong className="text-foreground">
                                         Client:
                                     </strong>{' '}
-                                    client@company.com / password
+                                    client@test.com / password
                                 </p>
                             </div>
                         </div>

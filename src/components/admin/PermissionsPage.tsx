@@ -51,7 +51,7 @@ export function PermissionsPage() {
     // Function to update pending changes
     const updatePendingPermission = (
         feature: keyof typeof featurePermissions,
-        role: 'admin' | 'manager' | 'team_member' | 'client',
+        role: 'admin' | 'manager' | 'developer' | 'support' | 'it' | 'client',
         enabled: boolean,
     ) => {
         setPendingChanges((prev) => ({
@@ -70,7 +70,13 @@ export function PermissionsPage() {
             Object.entries(rolePermissions).forEach(([role, enabled]) => {
                 updateFeaturePermission(
                     feature as keyof typeof featurePermissions,
-                    role as 'admin' | 'manager' | 'team_member' | 'client',
+                    role as
+                        | 'admin'
+                        | 'manager'
+                        | 'developer'
+                        | 'support'
+                        | 'it'
+                        | 'client',
                     enabled as boolean,
                 );
             });
@@ -109,9 +115,13 @@ export function PermissionsPage() {
                     'profileAccess',
                 ].includes(feature.key)
             ) {
-                defaultPermissions[feature.key].team_member = true;
+                defaultPermissions[feature.key].developer = true;
+                defaultPermissions[feature.key].support = true;
+                defaultPermissions[feature.key].it = true;
             } else {
-                defaultPermissions[feature.key].team_member = false;
+                defaultPermissions[feature.key].developer = false;
+                defaultPermissions[feature.key].support = false;
+                defaultPermissions[feature.key].it = false;
             }
 
             // Client - Minimal access for external users
@@ -155,9 +165,13 @@ export function PermissionsPage() {
                     'profileAccess',
                 ].includes(feature.key)
             ) {
-                conservativePermissions[feature.key].team_member = true;
+                conservativePermissions[feature.key].developer = true;
+                conservativePermissions[feature.key].support = true;
+                conservativePermissions[feature.key].it = true;
             } else {
-                conservativePermissions[feature.key].team_member = false;
+                conservativePermissions[feature.key].developer = false;
+                conservativePermissions[feature.key].support = false;
+                conservativePermissions[feature.key].it = false;
             }
 
             // Client gets only notifications and profile
@@ -197,9 +211,13 @@ export function PermissionsPage() {
                     'profileAccess',
                 ].includes(feature.key)
             ) {
-                liberalPermissions[feature.key].team_member = true;
+                liberalPermissions[feature.key].developer = true;
+                liberalPermissions[feature.key].support = true;
+                liberalPermissions[feature.key].it = true;
             } else {
-                liberalPermissions[feature.key].team_member = false;
+                liberalPermissions[feature.key].developer = false;
+                liberalPermissions[feature.key].support = false;
+                liberalPermissions[feature.key].it = false;
             }
 
             // Client gets view access where appropriate
@@ -224,7 +242,9 @@ export function PermissionsPage() {
     const roles = [
         { key: 'admin' as const, label: 'Admin' },
         { key: 'manager' as const, label: 'Manager' },
-        { key: 'team_member' as const, label: 'Team Member' },
+        { key: 'developer' as const, label: 'Developer' },
+        { key: 'support' as const, label: 'Support' },
+        { key: 'it' as const, label: 'IT' },
         { key: 'client' as const, label: 'Client' },
     ];
 
@@ -485,7 +505,17 @@ export function PermissionsPage() {
                                             );
                                             updatePendingPermission(
                                                 feature.key,
-                                                'team_member',
+                                                'developer',
+                                                false,
+                                            );
+                                            updatePendingPermission(
+                                                feature.key,
+                                                'support',
+                                                false,
+                                            );
+                                            updatePendingPermission(
+                                                feature.key,
+                                                'it',
                                                 false,
                                             );
                                             updatePendingPermission(

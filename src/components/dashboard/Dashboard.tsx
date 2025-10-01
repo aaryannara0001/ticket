@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuthStore } from '@/store/authStore';
 import { useTicketStore } from '@/store/ticketStore';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Clock, Ticket, TrendingUp } from 'lucide-react';
@@ -14,17 +15,21 @@ import { TicketsByPriority } from './TicketsByPriority';
 export function Dashboard() {
     const dashboardStats = useTicketStore((s) => s.dashboardStats);
     const loading = useTicketStore((s) => s.loading);
+    const { user } = useAuthStore();
 
     useEffect(() => {
-        useTicketStore.getState().fetchDashboardStats();
+        if (user) {
+            useTicketStore.getState().fetchDashboardStats();
+            useTicketStore.getState().fetchTickets('assigned'); // Fetch assigned tickets for MyTicketsWidget
 
-        // start realtime simulation
-        useTicketStore.getState().startRealtimeUpdates();
+            // start realtime simulation
+            useTicketStore.getState().startRealtimeUpdates();
+        }
 
         return () => {
             useTicketStore.getState().stopRealtimeUpdates();
         };
-    }, []);
+    }, [user]);
 
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

@@ -5,55 +5,73 @@ interface FeaturePermissions {
     dashboardAccess: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
     ticketManagement: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
     kanbanAccess: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
     projectManagement: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
     workflowManagement: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
     reportsAccess: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
     adminAccess: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
     notificationAccess: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
     profileAccess: {
         admin: boolean;
         manager: boolean;
-        team_member: boolean;
+        developer: boolean;
+        support: boolean;
+        it: boolean;
         client: boolean;
     };
 }
@@ -64,7 +82,7 @@ interface SettingsState {
     // Actions
     updateFeaturePermission: (
         feature: keyof FeaturePermissions,
-        role: 'admin' | 'manager' | 'team_member' | 'client',
+        role: 'admin' | 'manager' | 'developer' | 'support' | 'it' | 'client',
         enabled: boolean,
     ) => void;
     isFeatureEnabledForRole: (
@@ -81,55 +99,73 @@ export const useSettingsStore = create<SettingsState>()(
                 dashboardAccess: {
                     admin: true,
                     manager: true,
-                    team_member: true,
-                    client: false,
+                    developer: true,
+                    support: true,
+                    it: true,
+                    client: true,
                 },
                 ticketManagement: {
                     admin: true,
                     manager: true,
-                    team_member: true,
+                    developer: true,
+                    support: true,
+                    it: true,
                     client: false,
                 },
                 kanbanAccess: {
                     admin: true,
                     manager: true,
-                    team_member: true,
+                    developer: true,
+                    support: true,
+                    it: true,
                     client: false,
                 },
                 projectManagement: {
                     admin: true,
                     manager: true,
-                    team_member: false,
+                    developer: false,
+                    support: false,
+                    it: false,
                     client: false,
                 },
                 workflowManagement: {
                     admin: true,
                     manager: true,
-                    team_member: false,
+                    developer: false,
+                    support: false,
+                    it: false,
                     client: false,
                 },
                 reportsAccess: {
                     admin: true,
                     manager: true,
-                    team_member: false,
+                    developer: false,
+                    support: false,
+                    it: false,
                     client: false,
                 },
                 adminAccess: {
                     admin: true,
                     manager: false,
-                    team_member: false,
+                    developer: false,
+                    support: false,
+                    it: false,
                     client: false,
                 },
                 notificationAccess: {
                     admin: true,
                     manager: true,
-                    team_member: true,
+                    developer: true,
+                    support: true,
+                    it: true,
                     client: true,
                 },
                 profileAccess: {
                     admin: true,
                     manager: true,
-                    team_member: true,
+                    developer: true,
+                    support: true,
+                    it: true,
                     client: true,
                 },
             },
@@ -169,55 +205,73 @@ export const useSettingsStore = create<SettingsState>()(
                         dashboardAccess: {
                             admin: true,
                             manager: true,
-                            team_member: true,
-                            client: false,
+                            developer: true,
+                            support: true,
+                            it: true,
+                            client: true,
                         },
                         ticketManagement: {
                             admin: true,
                             manager: true,
-                            team_member: true,
+                            developer: true,
+                            support: true,
+                            it: true,
                             client: false,
                         },
                         kanbanAccess: {
                             admin: true,
                             manager: true,
-                            team_member: true,
+                            developer: true,
+                            support: true,
+                            it: true,
                             client: false,
                         },
                         projectManagement: {
                             admin: true,
                             manager: true,
-                            team_member: false,
+                            developer: false,
+                            support: false,
+                            it: false,
                             client: false,
                         },
                         workflowManagement: {
                             admin: true,
                             manager: true,
-                            team_member: false,
+                            developer: false,
+                            support: false,
+                            it: false,
                             client: false,
                         },
                         reportsAccess: {
                             admin: true,
                             manager: true,
-                            team_member: false,
+                            developer: false,
+                            support: false,
+                            it: false,
                             client: false,
                         },
                         adminAccess: {
                             admin: true,
                             manager: false,
-                            team_member: false,
+                            developer: false,
+                            support: false,
+                            it: false,
                             client: false,
                         },
                         notificationAccess: {
                             admin: true,
                             manager: true,
-                            team_member: true,
+                            developer: true,
+                            support: true,
+                            it: true,
                             client: true,
                         },
                         profileAccess: {
                             admin: true,
                             manager: true,
-                            team_member: true,
+                            developer: true,
+                            support: true,
+                            it: true,
                             client: true,
                         },
                     },

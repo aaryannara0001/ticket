@@ -2,11 +2,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
-import { Ticket } from '@/types';
+import { useTicketStore } from '@/store/ticketStore';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
 import { ArrowRight, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const statusColors = {
@@ -24,52 +23,20 @@ const priorityColors = {
 };
 
 export function MyTicketsWidget() {
-    const [myTickets, setMyTickets] = useState<Ticket[]>([]);
-    const [loading, setLoading] = useState(true);
     const { user } = useAuthStore();
+    const { tickets } = useTicketStore();
 
-    useEffect(() => {
-        const loadMyTickets = async () => {
-            setLoading(true);
-            try {
-                // Use a temporary store instance to get assigned tickets
-                const { useTicketStore: tempStore } = await import(
-                    '@/store/ticketStore'
-                );
-                await tempStore.getState().fetchTickets('assigned');
-                const tickets = tempStore.getState().tickets;
-                setMyTickets(tickets.slice(0, 5)); // Show only first 5 tickets
-            } catch {
-                // intentionally ignore error details here
-            } finally {
-                setLoading(false);
-            }
-        };
+    // Filter tickets assigned to current user
+    const myTickets = tickets
+        .filter(
+            (ticket) =>
+                ticket.assigneeIds?.includes(user?.id || '') ||
+                ticket.assigneeId === user?.id,
+        )
+        .slice(0, 5);
 
-        if (user) {
-            loadMyTickets();
-        }
-    }, [user]);
-
-    if (loading) {
-        return (
-            <Card className="bg-card border-border shadow-lg">
-                <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                        <div className="h-6 bg-muted rounded w-32 animate-pulse"></div>
-                        <div className="h-4 w-4 bg-muted rounded animate-pulse"></div>
-                    </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="space-y-2">
-                            <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
-                            <div className="h-3 bg-muted rounded w-1/2 animate-pulse"></div>
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-        );
+    if (!user) {
+        return null;
     }
 
     return (

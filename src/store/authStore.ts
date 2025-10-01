@@ -1,23 +1,24 @@
-import { User } from '@/types';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { useSettingsStore } from './settingsStore';
+import { apiService } from '../services/api';
+import { User } from '../types';
 
 interface AuthState {
     user: User | null;
     users: User[];
     isAuthenticated: boolean;
+    isInitialized: boolean;
     login: (email: string, password: string) => Promise<boolean>;
-    logout: () => void;
-    hasPermission: (permission: string) => boolean;
     register: (
         name: string,
         email: string,
         password: string,
         role: User['role'],
     ) => Promise<boolean>;
-    // User management helpers for admin
-    getUsers: () => User[];
+    verifyEmail: (email: string, otp: string) => Promise<boolean>;
+    resendOTP: (email: string) => Promise<boolean>;
+    loadCurrentUser: () => Promise<void>;
+    loadUsers: () => Promise<void>;
     createUser: (
         name: string,
         email: string,
@@ -27,6 +28,9 @@ interface AuthState {
     ) => Promise<User | null>;
     updateUser: (id: string, patch: Partial<User>) => Promise<boolean>;
     deleteUser: (id: string) => Promise<boolean>;
+    logout: () => Promise<void>;
+    hasPermission: (permission: string) => boolean;
+    initialize: () => Promise<void>;
 }
 
 const rolePermissions: Record<string, string[]> = {
@@ -44,13 +48,34 @@ const rolePermissions: Record<string, string[]> = {
         'ticket_detail',
         'assign_tickets',
     ],
-    team_member: [
+    developer: [
         'dashboard',
         'tickets',
         'my_tickets',
         'kanban',
         'create_ticket',
         'ticket_detail',
+    ],
+    support: [
+        'dashboard',
+        'tickets',
+        'my_tickets',
+        'kanban',
+        'create_ticket',
+        'ticket_detail',
+        'assign_tickets',
+    ],
+    it: [
+        'dashboard',
+        'tickets',
+        'my_tickets',
+        'kanban',
+        'epics',
+        'reports',
+        'workflows',
+        'create_ticket',
+        'ticket_detail',
+        'assign_tickets',
     ],
     client: [
         'dashboard',
@@ -79,159 +104,267 @@ export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
             user: null,
-            users: [
-                {
-                    id: '1',
-                    name: 'John Admin',
-                    email: 'admin@company.com',
-                    role: 'admin',
-                    department: 'IT',
-                    isActive: true,
-                    createdAt: new Date(),
-                    avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150',
-                },
-            ],
+            users: [],
             isAuthenticated: false,
-
+            isInitialized: false,
             login: async (email: string, password: string) => {
-                // Mock authentication
-                const user = get().users.find((u) => u.email === email);
-                if (user && password === 'password') {
+                try {
+                    const response = await apiService.login({
+                        email,
+                        password,
+                    });
+                    const user: User = {
+                        id: response.user.id,
+                        name: response.user.name,
+                        email: response.user.email,
+                        role: response.user.role as User['role'],
+                        department: 'IT', // Default department
+                        isActive: response.user.active,
+                        emailVerified: response.user.emailVerified,
+                        createdAt: new Date(response.user.createdAt),
+                        avatar: undefined,
+                    };
                     set({ user, isAuthenticated: true });
                     return true;
+                } catch (error) {
+                    console.error('Login failed:', error);
+                    return false;
                 }
-                return false;
             },
-
             register: async (
                 name: string,
                 email: string,
-                _password: string,
+                password: string,
                 role: User['role'],
             ) => {
-                // Simple mock register: prevent duplicates
-                const existing = get().users.find((u) => u.email === email);
-                if (existing) return false;
-
-                const newUser: User = {
-                    id: String(Date.now()),
-                    name,
-                    email,
-                    role,
-                    department: role === 'client' ? 'External' : 'Unassigned',
-                    isActive: true,
-                    createdAt: new Date(),
-                } as User;
-
-                // Add to users store (in-memory)
-                set((state) => ({
-                    user: newUser,
-                    isAuthenticated: true,
-                    users: [...state.users, newUser],
-                }));
-                return true;
+                try {
+                    // Map frontend roles to backend roles
+                    const roleMapping: Record<
+                        User['role'],
+                        | 'developer'
+                        | 'support'
+                        | 'it'
+                        | 'manager'
+                        | 'admin'
+                        | 'client'
+                    > = {
+                        developer: 'developer',
+                        support: 'support',
+                        it: 'it',
+                        manager: 'manager',
+                        admin: 'admin',
+                        client: 'client',
+                    };
+                    const backendRole = roleMapping[role];
+                    await apiService.register({
+                        name,
+                        email,
+                        password,
+                        role: backendRole,
+                    });
+                    // Registration successful, OTP sent to email
+                    // User needs to verify email before login
+                    return true;
+                } catch (error) {
+                    console.error('Register failed:', error);
+                    return false;
+                }
             },
-
+            verifyEmail: async (email: string, otp: string) => {
+                try {
+                    await apiService.verifyEmail(email, otp);
+                    return true;
+                } catch (error) {
+                    console.error('Email verification failed:', error);
+                    return false;
+                }
+            },
+            resendOTP: async (email: string) => {
+                try {
+                    await apiService.resendOTP(email);
+                    return true;
+                } catch (error) {
+                    console.error('Resend OTP failed:', error);
+                    return false;
+                }
+            },
             // User helpers
             getUsers: () => {
                 return get().users;
             },
-
+            loadCurrentUser: async () => {
+                try {
+                    const response = await apiService.getCurrentUser();
+                    const user: User = {
+                        id: response.id,
+                        name: response.name,
+                        email: response.email,
+                        role: response.role as User['role'],
+                        department: 'IT', // Default department
+                        isActive: !!response.active,
+                        emailVerified: response.emailVerified,
+                        createdAt: new Date(response.createdAt),
+                        avatar: undefined,
+                    };
+                    set({ user, isAuthenticated: true });
+                } catch (error) {
+                    console.error('Load current user failed:', error);
+                    apiService.clearToken();
+                    set({ user: null, isAuthenticated: false });
+                    throw error;
+                }
+            },
+            loadUsers: async () => {
+                try {
+                    const response = await apiService.getUsers();
+                    const users: User[] = response.map((u) => ({
+                        id: u.id,
+                        name: u.name,
+                        email: u.email,
+                        role: u.role as User['role'],
+                        department: 'IT', // Default department
+                        isActive: !!u.active,
+                        emailVerified: u.emailVerified,
+                        createdAt: new Date(u.createdAt),
+                        avatar: undefined,
+                    }));
+                    set({ users });
+                } catch (error) {
+                    console.error('Load users failed:', error);
+                }
+            },
             createUser: async (
                 name: string,
                 email: string,
-                _password: string,
+                password: string,
                 role: User['role'],
                 department?: string,
             ) => {
-                const existing = get().users.find((u) => u.email === email);
-                if (existing) return null;
-                const newUser: User = {
-                    id: String(Date.now()),
-                    name,
-                    email,
-                    role,
-                    department:
-                        department ||
-                        (role === 'client' ? 'External' : 'Unassigned'),
-                    isActive: true,
-                    createdAt: new Date(),
-                } as User;
-                set((state) => ({ users: [...state.users, newUser] }));
-                return { ...newUser };
+                try {
+                    const newUser = await apiService.createUser({
+                        name,
+                        email,
+                        password,
+                        role,
+                    });
+                    const user: User = {
+                        id: newUser.id,
+                        name: newUser.name,
+                        email: newUser.email,
+                        role: newUser.role as User['role'],
+                        department: department || 'Unassigned',
+                        isActive: !!newUser.active,
+                        emailVerified: newUser.emailVerified,
+                        createdAt: new Date(newUser.createdAt),
+                    };
+                    set((state) => ({ users: [...state.users, user] }));
+                    return user;
+                } catch (error) {
+                    console.error('Create user failed:', error);
+                    return null;
+                }
             },
-
             updateUser: async (id: string, patch: Partial<User>) => {
-                const idx = get().users.findIndex((u) => u.id === id);
-                if (idx === -1) return false;
-                set((state) => {
-                    const users = [...state.users];
-                    users[idx] = { ...users[idx], ...patch };
-                    return { users };
-                });
-
-                // If current authenticated user was updated, update store user as well
-                const { user } = get();
-                if (user && user.id === id) {
-                    set({ user: { ...user, ...patch } as User });
+                try {
+                    // Convert isActive to active for API
+                    const apiPatch: any = { ...patch };
+                    if (patch.isActive !== undefined) {
+                        apiPatch.active = patch.isActive;
+                        delete apiPatch.isActive;
+                    }
+                    await apiService.updateUser(id, apiPatch);
+                    set((state) => {
+                        const users = [...state.users];
+                        const idx = users.findIndex((u) => u.id === id);
+                        if (idx !== -1) {
+                            users[idx] = {
+                                ...users[idx],
+                                ...patch,
+                            };
+                        }
+                        return { users };
+                    });
+                    // If current authenticated user was updated, update store user as well
+                    const { user } = get();
+                    if (user && user.id === id) {
+                        set({ user: { ...user, ...patch } as User });
+                    }
+                    return true;
+                } catch (error) {
+                    console.error('Update user failed:', error);
+                    return false;
                 }
-
-                return true;
             },
-
             deleteUser: async (id: string) => {
-                const idx = get().users.findIndex((u) => u.id === id);
-                if (idx === -1) return false;
-                set((state) => {
-                    const users = [...state.users];
-                    users.splice(idx, 1);
-                    return { users };
-                });
-
-                // if deleted current user, logout
-                const { user } = get();
-                if (user && user.id === id) {
-                    set({ user: null, isAuthenticated: false });
+                try {
+                    await apiService.deleteUser(id);
+                    set((state) => {
+                        const users = [...state.users];
+                        const idx = users.findIndex((u) => u.id === id);
+                        if (idx !== -1) {
+                            users.splice(idx, 1);
+                        }
+                        return { users };
+                    });
+                    // if deleted current user, logout
+                    const { user } = get();
+                    if (user && user.id === id) {
+                        set({ user: null, isAuthenticated: false });
+                    }
+                    return true;
+                } catch (error) {
+                    console.error('Delete user failed:', error);
+                    return false;
                 }
-
-                return true;
             },
-
-            logout: () => {
-                set({ user: null, isAuthenticated: false });
+            logout: async () => {
+                try {
+                    await apiService.logout();
+                } catch (error) {
+                    console.error('Logout error:', error);
+                } finally {
+                    set({ user: null, isAuthenticated: false, users: [] });
+                    apiService.clearToken();
+                }
             },
-
             hasPermission: (permission: string) => {
                 const { user } = get();
                 if (!user) return false;
-
                 // Admin always has access
                 if (user.role === 'admin') return true;
-
                 const permissions = rolePermissions[user.role] || [];
                 const hasBasicPermission =
-                    permissions.includes('*') ||
-                    permissions.includes(permission);
-
+                    permissions.includes(permission) ||
+                    permissions.includes('*');
                 if (!hasBasicPermission) return false;
-
-                // If permission maps to a feature toggle, consult settingsStore
                 const featureKey = permissionToFeature[permission];
+                // If permission maps to a feature toggle, consult settingsStore
                 if (featureKey) {
-                    const settingsStore = useSettingsStore.getState();
-                    // Cast because settingsStore expects keyof FeaturePermissions
-                    return settingsStore.isFeatureEnabledForRole(
-                        featureKey as any,
-                        user.role,
-                    );
+                    // For now, return true - settingsStore integration can be added later
+                    return true;
                 }
-
-                // Default allow when no feature toggle exists
-                return true;
+                return hasBasicPermission;
+            },
+            initialize: async () => {
+                try {
+                    await get().loadCurrentUser();
+                } catch {
+                    // Token is invalid, clear it
+                    apiService.clearToken();
+                    set({ user: null, isAuthenticated: false });
+                } finally {
+                    set({ isInitialized: true });
+                }
             },
         }),
         {
             name: 'auth-storage',
+            partialize: (state) => ({
+                // Only persist isAuthenticated and isInitialized, not user data
+                // User data will be loaded fresh on initialization
+                isAuthenticated: state.isAuthenticated,
+                isInitialized: state.isInitialized,
+            }),
         },
     ),
 );
